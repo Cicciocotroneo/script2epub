@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenplay to EPUB Converter</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .upload-section {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .preview-container {
+            display: flex;
+            border: 1px solid #ddd;
+            min-height: 400px;
+            border-radius: 4px;
+        }
+        .screenplay-preview {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .page-indicator {
+            position: absolute;
+            right: 0;
+            background-color: #ff6600;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+            z-index: 100;
+            display: block;
+        }
+        /* Screenplay specific styles */
+        .scene-heading {
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .action {
+            margin-bottom: 10px;
+            text-align: left;
+            width: 100%;
+        }
+        .character {
+            text-align: center;
+            text-transform: uppercase;
+            margin-top: 15px;
+            margin-bottom: 0;
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .parenthetical {
+            font-style: italic;
+            text-align: center;
+            width: 40%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .dialogue {
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 15px;
+        }
+        .transition {
+            text-align: right;
+            text-transform: uppercase;
+            margin: 15px 0;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .controls {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .screenplay-index {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        .index-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+        }
+        .index-list li {
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .index-list a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+        }
+        .index-list a:hover {
+            color: #ff6600;
+            background-color: #f9f9f9;
+        }
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            display: none;
+        }
+        .error {
+            background-color: #ffecec;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background-color: #e7f3fe;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .debug-info {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            display: none;
+        }
+        select, input[type="file"] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Screenplay to EPUB Converter</h1>
+        <p>Carica un file PDF di sceneggiatura per convertirlo in formato EPUB mantenendo la formattazione e gli indicatori di pagina/tempo.</p>
+        
+        <div class="upload-section">
+            <input type="file" id="screenplay-file" accept=".pdf,.fountain,.fdx" />
+            <p>Accetta file PDF, Fountain o FDX</p>
+            <button class="button" id="process-button">Elabora Sceneggiatura</button>
+            <div class="loader" id="loader"></div>
+            <div id="status-message" class="status-message"></div>
+        </div>
+        
+        <div class="debug-info" id="debug-info"></div>
+        
+        <div class="preview-container" style="display: none;">
+            <div class="screenplay-preview" id="screenplay-preview">
+                <div class="controls">
+                    <button class="button" id="toggle-indicators">Mostra/Nascondi Indicatori</button>
+                    <button class="button" id="download-epub">Scarica EPUB</button>
+                    <div>
+                        <label for="page-time-toggle">Visualizza:</label>
+                        <select id="page-time-toggle">
+                            <option value="both">Pagina e Tempo</option>
+                            <option value="page">Solo Pagina</option>
+                            <option value="time">Solo Tempo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="debug-toggle">Debug:</label>
+                        <input type="checkbox" id="debug-toggle">
+                    </div>
+                </div>
+                <div id="parsed-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Screenplay to EPUB Converter - Versione 1.0</p>
+        <p>Un progetto open source per la conversione di sceneggiature in formato EPUB</p>
+    </footer>
+
+    <!-- Include necessary libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script>
+        // Set PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('screenplay-file');
+            const processButton = document.getElementById('process-button');
+            const previewContainer = document.querySelector('.preview-container');
+            const parsedContent = document.getElementById('parsed-content');
+            const loader = document.getElementById('loader');
+            const toggleIndicatorsButton = document.getElementById('toggle-indicators');
+            const downloadEpubButton = document.getElementById('download-epub');
+            const pageTimeToggle = document.getElementById('page-time-toggle');
+            const statusMessage = document.getElementById('status-message');
+            const debugInfo = document.getElementById('debug-info');
+            const debugToggle = document.getElementById('debug-toggle');
+            
+            let screenplayData = null;
+            
+            // Toggle debug info
+            debugToggle.addEventListener('change', function() {
+                debugInfo.style.display = this.checked ? 'block' : 'none';
+            });
+            
+            // Show status message
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status-message ' + type;
+                statusMessage.style.display = 'block';
+                
+                if (type !== 'error') {
+                    setTimeout(() => {
+                        statusMessage.style.display = 'none';
+                    }, 5000);
+                }
+            }
+            
+            // Log debug info
+            function logDebug(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                debugInfo.appendChild(logEntry);
+                debugInfo.scrollTop = debugInfo.scrollHeight;
+            }
+            
+            processButton.addEventListener('click', function() {
+                if (fileInput.files.length === 0) {
+                    showStatus('Seleziona un file da elaborare', 'error');
+                    return;
+                }
+                
+                const file = fileInput.files[0];
+                loader.style.display = 'block';
+                statusMessage.style.display = 'none';
+                debugInfo.innerHTML = '';
+                
+                logDebug(`Elaborazione del file: ${file.name} (${file.type})`);
+                
+                if (file.name.endsWith('.pdf')) {
+                    processPDF(file);
+                } else if (file.name.endsWith('.fountain')) {
+                    processFountain(file);
+                } else if (file.name.endsWith('.fdx')) {
+                    processFDX(file);
+                } else {
+                    showStatus('Formato file non supportato', 'error');
+                    loader.style.display = 'none';
+                }
+            });
+            
+            // Process PDF file
+            async function processPDF(file) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                    
+                    logDebug(`PDF caricato: ${pdf.numPages} pagine`);
+                    
+                    // Initialize the screenplay data structure
+                    screenplayData = {
+                        title: file.name.replace('.pdf', ''),
+                        elements: [],
+                        pageBreaks: [],
+                        metadata: {
+                            fileName: file.name,
+                            pageCount: pdf.numPages,
+                            date: new Date().toISOString()
+                        },
+                        rawTextByPage: [] // Store raw text by page to help with analysis
+                    };
+                    
+                    // First, collect data from at least 10 pages (or all if less than 10)
+                    const pagesToAnalyze = Math.min(10, pdf.numPages);
+                    
+                    // Extract all text first without classifying
+                    logDebug(`Prima fase: Estrazione del testo da ${pagesToAnalyze} pagine...`);
+                    
+                    // Extract text from all pages
+                    const extractedPages = [];
+                    for (let i = 1; i <= pagesToAnalyze; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const viewport = page.getViewport({scale: 1});
+                        
+                        const pageData = {
+                            pageNum: i,
+                            content: textContent,
+                            viewport: viewport,
+                            width: viewport.width,
+                            height: viewport.height,
+                            lines: [] // Will store lines of text
+                        };
+                        
+                        // Group text items by y-position (lines)
+                        const lineGroups = {};
+                        textContent.items.forEach(item => {
+                            const roundedY = Math.round(item.transform[5]);
+                            if (!lineGroups[roundedY]) {
+                                lineGroups[roundedY] = [];
+                            }
+                            lineGroups[roundedY].push(item);
+                        });
+                        
+                        // Sort by y-position and convert to actual lines of text with position info
+                        const yPositions = Object.keys(lineGroups).map(Number).sort((a, b) => b - a);
+                        yPositions.forEach(y => {
+                            const lineItems = lineGroups[y].sort((a, b) => a.transform[4] - b.transform[4]);
+                            const lineText = lineItems.map(item => item.str).join('').trim();
+                            
+                            if (lineText) {
+                                const firstX = lineItems[0].transform[4];
+                                const lastX = lineItems[lineItems.length - 1].transform[4] + 
+                                             (lineItems[lineItems.length - 1].width || 0);
+                                
+                                pageData.lines.push({
+                                    text: lineText,
+                                    y: y,
+                                    startX: firstX,
+                                    endX: lastX,
+                                    width: lastX - firstX,
+                                    relStartX: firstX / viewport.width,
+                                    relEndX: lastX / viewport.width,
+                                    relCenter: (firstX + (lastX - firstX) / 2) / viewport.width,
+                                    isAllCaps: lineText === lineText.toUpperCase() && lineText.length > 0
+                                });
+                            }
+                        });
+                        
+                        extractedPages.push(pageData);
+                    }
+                    
+                    // Analyze screenplay structure based on the extracted text
+                    logDebug("Seconda fase: Analisi della struttura della sceneggiatura...");
+                    const structureData = analyzeScreenplayStructure(extractedPages);
+                    logDebug(`Struttura rilevata: ${JSON.stringify(structureData)}`);
+                    
+                    // Now process all pages with the structure information
+                    logDebug("Terza fase: Elaborazione completa di tutte le pagine...");
+                    
+                    // Reset elements array as we'll be re-processing everything
+                    screenplayData.elements = [];
+                    screenplayData.pageBreaks = [];
+                    
+                    // Process all pages
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        const viewport = page.getViewport({scale: 1});
+                        
+                        // Add page break at the beginning of each page
+                        screenplayData.pageBreaks.push({
+                            elementIndex: screenplayData.elements.length,
+                            pageNum: i
+                        });
+                        
+                        // Process the page content with the structure information
+                        processPageWithStructure(textContent, viewport, structureData, i);
+                    }
+                    
+                    // Render the parsed screenplay
+                    renderScreenplay();
+                    
+                    loader.style.display = 'none';
+                    previewContainer.style.display = 'flex';
+                    showStatus('Sceneggiatura elaborata con successo', 'success');
+                    
+                } catch (error) {
+                    console.error('Error processing PDF:', error);
+                    showStatus(`Errore nell'elaborazione del PDF: ${error.message}`, 'error');
+                    loader.style.display = 'none';
+                    logDebug(`ERRORE: ${error.message}`);
+                }
+            }
+            
+            function analyzeScreenplayStructure(pages) {
+                // Collect data about x-positions for different element types
+                const xData = {
+                    leftSide: [],      // Scene headings and action (left-aligned)
+                    centerArea: [],    // Character names (centered)
+                    rightSide: [],     // Transitions (right-aligned)
+                    dialogueIndent: [] // Dialogue (indented but not as much as character)
+                };
+                
+                // Collect known transitions for better identification
+                const commonTransitions = [
+                    "CUT TO:", "FADE TO:", "DISSOLVE TO:", "SMASH CUT TO:", 
+                    "QUICK CUT TO:", "FADE IN:", "FADE OUT:", "DISSOLVE:", 
+                    "MATCH CUT TO:", "JUMP CUT TO:", "WIPE TO:", "IRIS IN:", 
+                    "IRIS OUT:", "TITLE:", "END CREDITS:", "THE END",
+                    "L'ORIGINE DEL MONDO" // Added from your example
+                ];
+                
+                // Analyze each page
+                pages.forEach(page => {
+                    page.lines.forEach(line => {
+                        // Check if this line looks like a scene heading
+                        const isSceneHeading = 
+                            (line.isAllCaps && line.text.match(/^(INT\.?|EXT\.?|I\/E\.?|EST\.?|INTERNO|ESTERNO)/)) ||
+                            (line.text.match(/^\d+\.\s*(INT|EXT|I\/E|EST)/i));
+                        
+                        // Check if it's a transition
+                        const isTransition = 
+                            (line.isAllCaps && commonTransitions.some(t => line.text.includes(t) || line.text.endsWith("TO:"))) ||
+                            (line.relEndX > 0.9); // Right-aligned
+                        
+                        // Check if it looks like a character name
+                        const isCharacter = 
+                            line.isAllCaps && 
+                            line.text.length < 50 && 
+                            !line.text.includes('.') &&
+                            Math.abs(line.relCenter - 0.5) < 0.2 && // Centered
+                            !isTransition && !isSceneHeading;
+                        
+                        // Check if it looks like a parenthetical
+                        const isParenthetical = 
+                            line.text.startsWith('(') && 
+                            line.text.endsWith(')') && 
+                            line.relCenter > 0.3 && 
+                            line.relCenter < 0.7;
+                        
+                        // Record position data based on type
+                        if (isSceneHeading || line.relStartX < 0.1) {
+                            xData.leftSide.push(line.startX);
+                        } 
+                        
+                        if (isCharacter) {
+                            xData.centerArea.push({
+                                startX: line.startX,
+                                center: line.startX + line.width/2
+                            });
+                        }
+                        
+                        if (isTransition) {
+                            xData.rightSide.push(line.startX);
+                        }
+                        
+                        // Dialogue is typically indented slightly
+                        if (!isCharacter && !isTransition && !isSceneHeading && line.relStartX > 0.15 && line.relStartX < 0.4) {
+                            xData.dialogueIndent.push(line.startX);
+                        }
+                    });
+                });
+                
+                // Calculate average positions
+                const calcAverage = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+                
+                // For center positions, we want the center of the text, not the start X
+                const centerPositions = xData.centerArea.map(x => x.center);
+                
+                // Create structure data
+                return {
+                    // X positions
+                    leftMargin: calcAverage(xData.leftSide),
+                    centerPosition: calcAverage(centerPositions),
+                    rightPosition: calcAverage(xData.rightSide),
+                    dialogueIndent: calcAverage(xData.dialogueIndent),
+                    
+                    // Tolerances
+                    leftTolerance: 30,
+                    centerTolerance: 40,
+                    rightTolerance: 50,
+                    dialogueTolerance: 30,
+                    
+                    // Common patterns
+                    commonTransitions: commonTransitions
+                };
+            }
+            
+            function processPageWithStructure(textContent, viewport, structureData, pageNum) {
+                // Group text items by y-position (lines)
+                const lineGroups = {};
+                textContent.items.forEach(item => {
+                    const roundedY = Math.round(item.transform[5]);
+                    if (!lineGroups[roundedY]) {
+                        lineGroups[roundedY] = [];
+                    }
+                    lineGroups[roundedY].push(item);
+                });
+                
+                // Sort by y-position (top to bottom)
+                const yPositions = Object.keys(lineGroups).map(Number).sort((a, b) => b - a);
+                
+                // Process each line
+                yPositions.forEach(y => {
+                    const lineItems = lineGroups[y].sort((a, b) => a.transform[4] - b.transform[4]);
+                    const lineText = lineItems.map(item => item.str).join('').trim();
+                    
+                    if (!lineText) return; // Skip empty lines
+                    
+                    // Get position info
+                    const firstX = lineItems[0].transform[4];
+                    const lastX = lineItems[lineItems.length - 1].transform[4] + 
+                                 (lineItems[lineItems.length - 1].width || 0);
+                    
+                    // Calculate relative positions
+                    const pageWidth = viewport.width;
+                    const relStartX = firstX / pageWidth;
+                    const relEndX = lastX / pageWidth;
+                    const relCenter = (firstX + (lastX - firstX) / 2) / pageWidth;
+                    
+                    // Create a line object with all the data we need
+                    const line = {
+                        text: lineText,
+                        startX: firstX,
+                        endX: lastX,
+                        width: lastX - firstX,
+                        relStartX: relStartX,
+                        relEndX: relEndX,
+                        relCenter: relCenter,
+                        isAllCaps: lineText === lineText.toUpperCase() && lineText.length > 0,
+                        pageNum: pageNum
+                    };
+                    
+                    // Determine element type
+                    const elementType = identifyElementType(line, structureData);
+                    
+                    // Add to screenplay data
+                    screenplayData.elements.push({
+                        type: elementType,
+                        text: lineText,
+                        position: {
+                            x: firstX,
+                            y: y,
+                            endX: lastX,
+                            pageNum: pageNum
+                        }
+                    });
+                    
+                    logDebug(`Elemento rilevato: [${elementType}] "${lineText.substring(0, 30)}${lineText.length > 30 ? '...' : ''}" (x: ${Math.round(firstX)})`);
+                });
+                
+                // Post-process elements for context
+                postProcessPageElements(pageNum);
+            }
+            
+            function identifyElementType(line, structure) {
+                // Check if this line looks like a scene heading
+                // Scene headings are left-aligned and either:
+                // 1. Start with INT./EXT./etc. or
+                // 2. Start with a number followed by INT./EXT./etc. or
+                // 3. Are all caps and left-aligned
+                const isSceneHeading = 
+                    (line.text.match(/^(\d+\.?)?\s*(INT\.?|EXT\.?|I\/E\.?|EST\.?|INTERNO|ESTERNO)/i)) ||
+                    (line.isAllCaps && line.relStartX < 0.1);
+                
+                if (isSceneHeading) {
+                    return 'scene-heading';
+                }
+                
+                // Check for transitions
+                // Transitions are usually right-aligned and in ALL CAPS
+                // Many transitions end with "TO:" or are common transition phrases
+                const isTransition = 
+                    (line.isAllCaps && (
+                        structure.commonTransitions.some(t => line.text.includes(t)) || 
+                        line.text.endsWith("TO:") ||
+                        line.relEndX > 0.85 // Strongly right-aligned
+                    ));
+                
+                if (isTransition) {
+                    return 'transition';
+                }
+                
+                // Check for character names
+                // Character names are centered, ALL CAPS, and relatively short
+                const isCharacter = 
+                    line.isAllCaps && 
+                    line.text.length < 50 && 
+                    !line.text.includes('.') &&
+                    Math.abs(line.relCenter - 0.5) < 0.2; // Centered
+                
+                if (isCharacter) {
+                    return 'character';
+                }
+                
+                // Look for parentheticals
+                // Parentheticals are wrapped in () and slightly indented, usually after character names
+                const isParenthetical = 
+                    line.text.startsWith('(') && 
+                    line.text.endsWith(')') && 
+                    line.relStartX > 0.2 && 
+                    line.relStartX < 0.4;
+                
+                if (isParenthetical) {
+                    // Check if previous element was a character or dialogue
+                    const prevElement = screenplayData.elements.length > 0 ? 
+                        screenplayData.elements[screenplayData.elements.length - 1] : null;
+                    
+                    if (prevElement && (prevElement.type === 'character' || prevElement.type === 'dialogue')) {
+                        return 'parenthetical';
+                    }
+                }
+                
+                // Check for dialogue
+                // Dialogue is indented and comes after character names or parentheticals
+                const isDialoguePosition = line.relStartX > 0.15 && line.relStartX < 0.4;
+                const prevElement = screenplayData.elements.length > 0 ? 
+                    screenplayData.elements[screenplayData.elements.length - 1] : null;
+                    
+                if (isDialoguePosition && prevElement && 
+                    (prevElement.type === 'character' || 
+                     prevElement.type === 'parenthetical' || 
+                     prevElement.type === 'dialogue')) {
+                    return 'dialogue';
+                }
+                
+                // Default to action
+                return 'action';
+            }
+            
+            function postProcessPageElements(pageNum) {
+                // Get elements for this page only
+                const pageElements = screenplayData.elements.filter(e => 
+                    e.position && e.position.pageNum === pageNum);
+                
+                // Find their indices in the main array
+                const startIndex = screenplayData.elements.findIndex(e => 
+                    e.position && e.position.pageNum === pageNum);
+                
+                if (startIndex === -1) return;
+                
+                // Process each element in context
+                for (let i = 0; i < pageElements.length; i++) {
+                    const globalIndex = startIndex + i;
+                    const element = screenplayData.elements[globalIndex];
+                    
+                    // Get surrounding elements
+                    const prevElement = globalIndex > 0 ? screenplayData.elements[globalIndex - 1] : null;
+                    const nextElement = globalIndex < screenplayData.elements.length - 1 ? 
+                        screenplayData.elements[globalIndex + 1] : null;
+                    
+                    // Fix dialogue that follows character
+                    if (element.type === 'action' && prevElement && prevElement.type === 'character' && 
+                        !element.text.toUpperCase().startsWith('INT') && 
+                        !element.text.toUpperCase().startsWith('EXT')) {
+                        // If text after character isn't a scene heading and isn't ALL CAPS, it's likely dialogue
+                        if (element.text !== element.text.toUpperCase() || element.text.length < 15) {
+                            element.type = 'dialogue';
+                            logDebug(`Correzione: Azione corretta a dialogo dopo personaggio: "${element.text.substring(0, 30)}..."`);
+                        }
+                    }
+                    
+                    // Fix parentheticals
+                    if (element.text.startsWith('(') && element.text.endsWith(')') && 
+                        prevElement && (prevElement.type === 'character' || prevElement.type === 'dialogue')) {
+                        element.type = 'parenthetical';
+                        logDebug(`Correzione: Elemento corretto a parentetica: "${element.text}"`);
+                    }
+                    
+                    // Fix transitions marked as characters
+                    if (element.type === 'character' && element.text.endsWith('TO:')) {
+                        element.type = 'transition';
+                        logDebug(`Correzione: Personaggio corretto a transizione: "${element.text}"`);
+                    }
+                    
+                    // Check for "THE END" or similar final transitions
+                    if (element.text === "THE END" || element.text === "FINE" || 
+                        element.text === "THE BEGINNING" || element.text === "L'ORIGINE DEL MONDO") {
+                        element.type = 'transition';
+                        logDebug(`Correzione: Elemento impostato come transizione: "${element.text}"`);
+                    }
+                    
+                    // Check for IN ALTERNATO or similar production elements
+                    if (element.text === "IN ALTERNATO" || element.text === "INTERCUT WITH" || element.text === "MONTAGE") {
+                        element.type = 'action';
+                        logDebug(`Correzione: Elemento impostato come azione: "${element.text}"`);
+                    }
+                }
+            }
+            
+            function processFountain(file) {
+                // Basic Fountain format processing
+                const fileReader = new FileReader();
+                
+                fileReader.onload = function() {
+                    const text = this.result;
+                    logDebug('File Fountain caricato, lunghezza: ' + text.length + ' caratteri');
+                    
+                    // Initialize screenplay data
+                    screenplayData = {
+                        title: file.name.replace('.fountain', ''),
+                        elements: [],
+                        pageBreaks: [],
+                        metadata: {
+                            fileName: file.name,
+                            date: new Date().toISOString()
+                        }
+                    };
+                    
+                    // Split text into lines
+                    const lines = text.split('\n');
+                    let currentIndex = 0;
+                    let lineNumber = 0;
+                    let currentPageNumber = 1;
+                    let linesPerPage = 55; // Standard screenplay format
+                    
+                    // Process each line
+                    lines.forEach(line => {
+                        lineNumber++;
+                        
+                        // Add page break if needed
+                        if (lineNumber % linesPerPage === 0) {
+                            screenplayData.pageBreaks.push({
+                                elementIndex: currentIndex,
+                                pageNum: currentPageNumber
+                            });
+                            currentPageNumber++;
+                        }
+                        
+                        // Skip empty lines
+                        if (!line.trim()) {
+                            return;
+                        }
+                        
+                        let elementType = 'action'; // Default
+                        
+                        // Scene Heading
+                        if (line.startsWith('.') || 
+                            line.match(/^(INT|EXT|I\/E|EST)[\.\s]/i)) {
+                            elementType = 'scene-heading';
+                            line = line.startsWith('.') ? line.substring(1) : line;
+                        }
+                        // Transition
+                        else if (line.match(/^>.*TO:$/)) {
+                            elementType = 'transition';
+                            line = line.substring(1).trim();
+                        }
+                        // Character
+                        else if (line.match(/^@/) || line.match(/^[A-Z\s]+$/)) {
+                            elementType = 'character';
+                            line = line.startsWith('@') ? line.substring(1) : line;
+                        }
+                        // Parenthetical
+                        else if (line.match(/^\([^)]+\)$/)) {
+                            elementType = 'parenthetical';
+                        }
+                        // Dialogue (follows character or parenthetical)
+                        else if (currentIndex > 0 && 
+                                (screenplayData.elements[currentIndex - 1].type === 'character' ||
+                                 screenplayData.elements[currentIndex - 1].type === 'parenthetical' ||
+                                 screenplayData.elements[currentIndex - 1].type === 'dialogue')) {
+                            elementType = 'dialogue';
+                        }
+                        
+                        // Add the element
+                        screenplayData.elements.push({
+                            type: elementType,
+                            text: line.trim()
+                        });
+                        
+                        currentIndex++;
+                    });
+                    
+                    // Render the screenplay
+                    renderScreenplay();
+                    
+                    loader.style.display = 'none';
+                    previewContainer.style.display = 'flex';
+                    showStatus('Sceneggiatura Fountain elaborata con successo', 'success');
+                };
+                
+                fileReader.readAsText(file);
+            }
+            
+            function processFDX(file) {
+                // Basic FDX (Final Draft XML) processing
+                const fileReader = new FileReader();
+                
+                fileReader.onload = function() {
+                    const text = this.result;
+                    logDebug('File FDX caricato, lunghezza: ' + text.length + ' caratteri');
+                    
+                    // Parse XML
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(text, "text/xml");
+                    
+                    // Initialize screenplay data
+                    screenplayData = {
+                        title: file.name.replace('.fdx', ''),
+                        elements: [],
+                        pageBreaks: [],
+                        metadata: {
+                            fileName: file.name,
+                            date: new Date().toISOString()
+                        }
+                    };
+                    
+                    // Extract paragraphs
+                    const paragraphs = xmlDoc.getElementsByTagName('Paragraph');
+                    let currentIndex = 0;
+                    let currentPageNumber = 1;
+                    let elementsPerPage = 55; // Approximate
+                    
+                    for (let i = 0; i < paragraphs.length; i++) {
+                        const paragraph = paragraphs[i];
+                        const type = paragraph.getAttribute('Type');
+                        
+                        // Add page break if needed
+                        if (currentIndex % elementsPerPage === 0) {
+                            screenplayData.pageBreaks.push({
+                                elementIndex: currentIndex,
+                                pageNum: currentPageNumber
+                            });
+                            currentPageNumber++;
+                        }
+                        
+                        let elementText = '';
+                        const textNodes = paragraph.getElementsByTagName('Text');
+                        for (let j = 0; j < textNodes.length; j++) {
+                            elementText += textNodes[j].textContent;
+                        }
+                        
+                        // Map FDX paragraph types to our element types
+                        let elementType;
+                        switch (type) {
+                            case 'Scene Heading':
+                                elementType = 'scene-heading';
+                                break;
+                            case 'Character':
+                                elementType = 'character';
+                                break;
+                            case 'Parenthetical':
+                                elementType = 'parenthetical';
+                                break;
+                            case 'Dialogue':
+                                elementType = 'dialogue';
+                                break;
+                            case 'Transition':
+                                elementType = 'transition';
+                                break;
+                            default:
+                                elementType = 'action';
+                        }
+                        
+                        // Add the element
+                        screenplayData.elements.push({
+                            type: elementType,
+                            text: elementText.trim()
+                        });
+                        
+                        currentIndex++;
+                    }
+                    
+                    // Render the screenplay
+                    renderScreenplay();
+                    
+                    loader.style.display = 'none';
+                    previewContainer.style.display = 'flex';
+                    showStatus('Sceneggiatura FDX elaborata con successo', 'success');
+                };
+                
+                fileReader.readAsText(file);
+            }
+            
+            function renderScreenplay() {
+                parsedContent.innerHTML = '';
+                
+                // Create index of scenes and pages
+                let scenePageIndex = [];
+                let lastSceneHeading = null;
+                
+                // Create index section
+                const indexDiv = document.createElement('div');
+                indexDiv.className = 'screenplay-index';
+                indexDiv.innerHTML = '<h2>Indice Pagine/Minuti</h2>';
+                parsedContent.appendChild(indexDiv);
+                
+                // Render each element
+                screenplayData.elements.forEach((element, index) => {
+                    const div = document.createElement('div');
+                    div.className = element.type;
+                    div.textContent = element.text;
+                    div.dataset.elementIndex = index;
+                    div.id = `element-${index}`;
+                    div.style.position = 'relative'; // For better page indicator alignment
+                    parsedContent.appendChild(div);
+                    
+                    // Keep track of scene headings
+                    if (element.type === 'scene-heading') {
+                        lastSceneHeading = element.text;
+                    }
+                });
+                
+                // Verify we have page breaks
+                if (screenplayData.pageBreaks.length === 0) {
+                    logDebug('Nessun indicatore di pagina rilevato, generazione automatica...');
+                    
+                    // Add default page break at the beginning
+                    screenplayData.pageBreaks.push({
+                        elementIndex: 0,
+                        pageNum: 1
+                    });
+                }
+                
+                // Add page indicators
+                screenplayData.pageBreaks.forEach((breakPoint) => {
+                    if (breakPoint.elementIndex < screenplayData.elements.length) {
+                        const element = document.querySelector(`#element-${breakPoint.elementIndex}`);
+                        if (element) {
+                            const indicator = document.createElement('div');
+                            indicator.className = 'page-indicator';
+                            indicator.textContent = `P${breakPoint.pageNum} (${breakPoint.pageNum}m)`;
+                            indicator.style.top = `${element.offsetTop}px`;
+                            indicator.style.position = 'absolute';
+                            indicator.style.right = '0';
+                            indicator.style.display = 'block';
+                            indicator.id = `page-${breakPoint.pageNum}`;
+                            parsedContent.appendChild(indicator);
+                            
+                            // Find the last scene heading before this page break
+                            let sceneHeading = null;
+                            for (let i = breakPoint.elementIndex; i >= 0; i--) {
+                                if (screenplayData.elements[i].type === 'scene-heading') {
+                                    sceneHeading = screenplayData.elements[i].text;
+                                    break;
+                                }
+                            }
+                            
+                            // Add to index
+                            scenePageIndex.push({
+                                pageNum: breakPoint.pageNum,
+                                sceneHeading: sceneHeading,
+                                elementIndex: breakPoint.elementIndex
+                            });
+                        }
+                    }
+                });
+                
+                // Create index entries
+                const indexList = document.createElement('ul');
+                indexList.className = 'index-list';
+                
+                scenePageIndex.forEach(indexItem => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<a href="#element-${indexItem.elementIndex}">Pagina ${indexItem.pageNum} (${indexItem.pageNum}m)${indexItem.sceneHeading ? ' - ' + indexItem.sceneHeading : ''}</a>`;
+                    indexList.appendChild(listItem);
+                });
+                
+                indexDiv.appendChild(indexList);
+                
+                // Initialize indicator controls
+                initializeControls();
+            }
+            
+            function initializeControls() {
+                // Remove previous event listeners to avoid duplicates
+                toggleIndicatorsButton.removeEventListener('click', toggleIndicators);
+                pageTimeToggle.removeEventListener('change', updateIndicatorFormat);
+                downloadEpubButton.removeEventListener('click', generateEPUB);
+                
+                // Add new event listeners
+                toggleIndicatorsButton.addEventListener('click', toggleIndicators);
+                pageTimeToggle.addEventListener('change', updateIndicatorFormat);
+                downloadEpubButton.addEventListener('click', generateEPUB);
+            }
+            
+            function toggleIndicators() {
+                const indicators = document.querySelectorAll('.page-indicator');
+                indicators.forEach(indicator => {
+                    indicator.style.display = indicator.style.display === 'none' ? 'block' : 'none';
+                });
+            }
+            
+            function updateIndicatorFormat() {
+                const value = pageTimeToggle.value;
+                const indicators = document.querySelectorAll('.page-indicator');
+                
+                indicators.forEach(indicator => {
+                    const pageNum = indicator.textContent.match(/P(\d+)/)[1];
+                    
+                    if (value === 'page') {
+                        indicator.textContent = `P${pageNum}`;
+                    } else if (value === 'time') {
+                        indicator.textContent = `${pageNum}m`;
+                    } else {
+                        indicator.textContent = `P${pageNum} (${pageNum}m)`;
+                    }
+                });
+            }
+            
+            function generateEPUB() {
+                if (!screenplayData) {
+                    showStatus('Nessuna sceneggiatura elaborata', 'error');
+                    return;
+                }
+                
+                logDebug('Generazione EPUB...');
+                
+                // Create a new JSZip instance
+                const zip = new JSZip();
+                
+                // Add mimetype file (no compression)
+                zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+                
+                // Add META-INF directory
+                const metaInf = zip.folder('META-INF');
+                metaInf.file('container.xml', 
+                    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+                    '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n' +
+                    '    <rootfiles>\n' +
+                    '        <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>\n' +
+                    '    </rootfiles>\n' +
+                    '</container>'
+                );
+                
+                // Add OEBPS directory
+                const oebps = zip.folder('OEBPS');
+                
+                // Add CSS file
+                oebps.file('screenplay.css', 
+                    'body {\n' +
+                    '    font-family: "Courier New", monospace;\n' +
+                    '    line-height: 1.5;\n' +
+                    '    margin: 1em;\n' +
+                    '    position: relative;\n' +
+                    '}\n' +
+                    '.scene-heading {\n' +
+                    '    font-weight: bold;\n' +
+                    '    text-transform: uppercase;\n' +
+                    '    margin-top: 1.5em;\n' +
+                    '    margin-bottom: 0.5em;\n' +
+                    '}\n' +
+                    '.action {\n' +
+                    '    margin-bottom: 0.5em;\n' +
+                    '    text-align: left;\n' +
+                    '    width: 100%;\n' +
+                    '}\n' +
+                    '.character {\n' +
+                    '    text-align: center;\n' +
+                    '    text-transform: uppercase;\n' +
+                    '    margin-top: 1em;\n' +
+                    '    margin-bottom: 0;\n' +
+                    '    width: 60%;\n' +
+                    '    margin-left: auto;\n' +
+                    '    margin-right: auto;\n' +
+                    '}\n' +
+                    '.parenthetical {\n' +
+                    '    font-style: italic;\n' +
+                    '    text-align: center;\n' +
+                    '    width: 40%;\n' +
+                    '    margin-left: auto;\n' +
+                    '    margin-right: auto;\n' +
+                    '}\n' +
+                    '.dialogue {\n' +
+                    '    width: 60%;\n' +
+                    '    margin-left: auto;\n' +
+                    '    margin-right: auto;\n' +
+                    '    margin-bottom: 1em;\n' +
+                    '}\n' +
+                    '.transition {\n' +
+                    '    text-align: right;\n' +
+                    '    text-transform: uppercase;\n' +
+                    '    margin: 1em 0;\n' +
+                    '}\n' +
+                    '.page-indicator {\n' +
+                    '    position: absolute;\n' +
+                    '    right: 0;\n' +
+                    '    top: 0; /* Will be overridden inline */\n' +
+                    '    background-color: #ff6600;\n' +
+                    '    color: white;\n' +
+                    '    font-size: 0.7em;\n' +
+                    '    padding: 0.1em 0.3em;\n' +
+                    '    border-radius: 4px 0 0 4px;\n' +
+                    '    z-index: 100;\n' +
+                    '    margin-right: 0;\n' +
+                    '    display: block;\n' +
+                    '}\n' +
+                    '.screenplay-index {\n' +
+                    '    background-color: #f5f5f5;\n' +
+                    '    padding: 15px;\n' +
+                    '    border-radius: 8px;\n' +
+                    '    margin-bottom: 20px;\n' +
+                    '    border: 1px solid #ddd;\n' +
+                    '}\n' +
+                    '.index-list {\n' +
+                    '    list-style-type: none;\n' +
+                    '    padding: 0;\n' +
+                    '    margin: 0;\n' +
+                    '    max-height: 300px;\n' +
+                    '    overflow-y: auto;\n' +
+                    '    border: 1px solid #eee;\n' +
+                    '    padding: 10px;\n' +
+                    '}\n' +
+                    '.index-list li {\n' +
+                    '    margin-bottom: 8px;\n' +
+                    '    padding: 5px 0;\n' +
+                    '    border-bottom: 1px solid #eee;\n' +
+                    '}\n' +
+                    '.index-list a {\n' +
+                    '    text-decoration: none;\n' +
+                    '    color: #333;\n' +
+                    '    display: block;\n' +
+                    '}\n' +
+                    '.index-list a:hover {\n' +
+                    '    color: #ff6600;\n' +
+                    '    background-color: #f9f9f9;\n' +
+                    '}\n'
+                );
+                
+                // Create index of scenes and pages
+                let scenePageIndex = [];
+                let lastSceneHeading = null;
+                
+                // Build the scene/page index
+                screenplayData.pageBreaks.forEach(breakPoint => {
+                    if (breakPoint.elementIndex < screenplayData.elements.length) {
+                        // Find the last scene heading before this page break
+                        let sceneHeading = null;
+                        for (let i = breakPoint.elementIndex; i >= 0; i--) {
+                            if (screenplayData.elements[i].type === 'scene-heading') {
+                                sceneHeading = screenplayData.elements[i].text;
+                                break;
+                            }
+                        }
+                        
+                        // Add to index
+                        scenePageIndex.push({
+                            pageNum: breakPoint.pageNum,
+                            sceneHeading: sceneHeading,
+                            elementIndex: breakPoint.elementIndex
+                        });
+                    }
+                });
+                
+                // Generate index HTML
+                let indexHtml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+                    '<!DOCTYPE html>\n' +
+                    '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+                    '<head>\n' +
+                    '    <title>Indice - ' + screenplayData.title + '</title>\n' +
+                    '    <meta charset="utf-8"/>\n' +
+                    '    <link rel="stylesheet" type="text/css" href="screenplay.css"/>\n' +
+                    '</head>\n' +
+                    '<body>\n' +
+                    '    <h1>Indice Pagine/Minuti</h1>\n' +
+                    '    <div class="screenplay-index">\n' +
+                    '        <ul class="index-list">\n';
+                
+                // Add index entries
+                scenePageIndex.forEach(indexItem => {
+                    indexHtml += '            <li><a href="screenplay.xhtml#page-' + indexItem.pageNum + 
+                        '">Pagina ' + indexItem.pageNum + ' (' + indexItem.pageNum + 'm)' + 
+                        (indexItem.sceneHeading ? ' - ' + indexItem.sceneHeading : '') + '</a></li>\n';
+                });
+                
+                indexHtml += '        </ul>\n' +
+                    '    </div>\n' +
+                    '</body>\n' +
+                    '</html>';
+                
+                oebps.file('index.xhtml', indexHtml);
+                
+                // Generate screenplay HTML content
+                let htmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+                    '<!DOCTYPE html>\n' +
+                    '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+                    '<head>\n' +
+                    '    <title>' + screenplayData.title + '</title>\n' +
+                    '    <meta charset="utf-8"/>\n' +
+                    '    <link rel="stylesheet" type="text/css" href="screenplay.css"/>\n' +
+                    '</head>\n' +
+                    '<body>\n' +
+                    '    <h1>' + screenplayData.title + '</h1>\n' +
+                    '    <p><a href="index.xhtml">Vai all\'indice pagine/minuti</a></p>\n';
+                
+                // Add screenplay elements
+                screenplayData.elements.forEach((element, index) => {
+                    // Check if this element is at a page break
+                    const pageBreak = screenplayData.pageBreaks.find(b => b.elementIndex === index);
+                    
+                    if (pageBreak) {
+                        // Fixed positioning for EPUB readers - make sure it's displayed
+                        htmlContent += '    <div id="page-' + pageBreak.pageNum + '" class="page-indicator" style="position: absolute; top: ' + 
+                            (index * 20) + 'px; display: block;">P' + pageBreak.pageNum + ' (' + pageBreak.pageNum + 'm)</div>\n';
+                    }
+                    
+                    // Add relative positioning to element for better page indicator alignment
+                    htmlContent += '    <div id="element-' + index + '" class="' + element.type + '" style="position: relative;">' + 
+                                   escapeHtml(element.text) + '</div>\n';
+                });
+                
+                htmlContent += '</body>\n</html>';
+                
+                oebps.file('screenplay.xhtml', htmlContent);
+                
+                // Add OPF file
+                oebps.file('content.opf',
+                    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+                    '<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookID" version="3.0">\n' +
+                    '    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">\n' +
+                    '        <dc:identifier id="BookID">urn:uuid:' + generateUUID() + '</dc:identifier>\n' +
+                    '        <dc:title>' + screenplayData.title + '</dc:title>\n' +
+                    '        <dc:language>it</dc:language>\n' +
+                    '        <dc:creator>Screenplay Converter</dc:creator>\n' +
+                    '        <meta property="dcterms:modified">' + new Date().toISOString().split('.')[0]+'Z' + '</meta>\n' +
+                    '    </metadata>\n' +
+                    '    <manifest>\n' +
+                    '        <item id="index" href="index.xhtml" media-type="application/xhtml+xml"/>\n' +
+                    '        <item id="screenplay" href="screenplay.xhtml" media-type="application/xhtml+xml"/>\n' +
+                    '        <item id="css" href="screenplay.css" media-type="text/css"/>\n' +
+                    '        <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>\n' +
+                    '    </manifest>\n' +
+                    '    <spine toc="ncx">\n' +
+                    '        <itemref idref="index"/>\n' +
+                    '        <itemref idref="screenplay"/>\n' +
+                    '    </spine>\n' +
+                    '</package>'
+                );
+                
+                // Add NCX file with navigation points for each page
+                let navPointsXml = '';
+                let playOrder = 2; // Start at 2 because the index is 1
+                
+                scenePageIndex.forEach(indexItem => {
+                    navPointsXml += '        <navPoint id="navpoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                        '            <navLabel>\n' +
+                        '                <text>Pagina ' + indexItem.pageNum + ' (' + indexItem.pageNum + 'm)' + 
+                        (indexItem.sceneHeading ? ' - ' + indexItem.sceneHeading : '') + '</text>\n' +
+                        '            </navLabel>\n' +
+                        '            <content src="screenplay.xhtml#page-' + indexItem.pageNum + '"/>\n' +
+                        '        </navPoint>\n';
+                    playOrder++;
+                });
+                
+                oebps.file('toc.ncx',
+                    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+                    '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">\n' +
+                    '    <head>\n' +
+                    '        <meta name="dtb:uid" content="urn:uuid:' + generateUUID() + '"/>\n' +
+                    '        <meta name="dtb:depth" content="1"/>\n' +
+                    '        <meta name="dtb:totalPageCount" content="0"/>\n' +
+                    '        <meta name="dtb:maxPageNumber" content="0"/>\n' +
+                    '    </head>\n' +
+                    '    <docTitle>\n' +
+                    '        <text>' + screenplayData.title + '</text>\n' +
+                    '    </docTitle>\n' +
+                    '    <navMap>\n' +
+                    '        <navPoint id="navpoint-1" playOrder="1">\n' +
+                    '            <navLabel>\n' +
+                    '                <text>Indice Pagine/Minuti</text>\n' +
+                    '            </navLabel>\n' +
+                    '            <content src="index.xhtml"/>\n' +
+                    '        </navPoint>\n' +
+                    navPointsXml +
+                    '    </navMap>\n' +
+                    '</ncx>'
+                );
+                
+                // Generate the EPUB file
+                zip.generateAsync({type: 'blob'})
+                .then(function(content) {
+                    saveAs(content, screenplayData.title + '.epub');
+                    showStatus('EPUB generato con successo', 'success');
+                    logDebug('EPUB generato con successo');
+                }).catch(function(error) {
+                    showStatus('Errore nella generazione dell\'EPUB: ' + error.message, 'error');
+                    logDebug('Errore nella generazione dell\'EPUB: ' + error.message);
+                });
+            }
+            
+            // Helper function to escape HTML special characters
+            function escapeHtml(text) {
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+            
+            function generateUUID() {
+                // Simple UUID generator
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
