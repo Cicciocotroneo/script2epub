@@ -633,14 +633,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 lineCount += 2; // Una transizione occupa una riga + spazio
             } else if (line.match(/^@.*/) || 
-                       line.match(/^[A-Z][A-Z\s']+(\s*\([A-Za-z\s\.,']+\))?$/) ||
-                    line.match(/^[A-Z][A-Z\s']+(\s*\(([A-Za-z\s\.,']+|V\.O\.|O\.S\.)(\)\s*\([A-Za-z\s\.,']+\))*\)|\s*(CONT('D)?|CONTINUED|V\.O\.|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?))$/i) {
+                       line.match(/^[A-Z][A-Z\s']+(\s*\([A-Za-z\s\.,']+\))*$/) ||
+                       line.match(/^[A-Z][A-Z\s']+((\s*\([A-Za-z\s\.,']+\))+|(\s*(CONT('D)?|CONTINUED|V\.O\.|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?))*)$/i)) {
                 // Personaggio - supporta anche casi come:
                 // MARIO (V.O.)
                 // MARIO (CONT'D)
+                // MARIO (V.O.)(CONT'D)
                 // MARIO CONTINUED
                 // MARIO (FILTERED)
-                // e varianti
+                // e varianti multiple
                 
                 // Rimuoviamo il @ se presente
                 const characterName = line.replace(/^@/, '');
