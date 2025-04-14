@@ -320,7 +320,7 @@
                     <p class="source">based on the short novel by Antonio De Rosa</p>
                     <p class="notes">SPEC SCRIPT<br>includes post-production dialogue<br>and omitted scenes</p>
                     <p class="copyright">(c) 2025 ADR</p>
-                    <p class="action">This is a story from Southern Italy, full of attempts to domesticate the rules, and characters that seem invented. But it is true.</p>
+                    <p class="action">This is a story from Southern Italy, full of attempts to domesticate rules, and characters that seem invented. But it is true.</p>
                     <p class="page-break">— Pagina 1 —</p>
                     <p class="scene-heading">INT. CASA DI MARIO - GIORNO</p>
                     <p class="action">Mario entra nell'appartamento e si guarda intorno. Posa la giacca su una sedia.</p>
@@ -463,8 +463,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Resettiamo i metadati
         metadataInfo = {
-            title: "Sceneggiatura senza titolo",
-            author: "Autore anonimo",
+            title: "",
+            author: "",
             credit: "",
             source: "",
             notes: "",
@@ -634,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 lineCount += 2; // Una transizione occupa una riga + spazio
             } else if (line.match(/^@.*/) || 
                        line.match(/^[A-Z][A-Z\s']+(\s*\([A-Za-z\s\.,']+\))?$/) ||
-                       line.match(/^[A-Z][A-Z\s']+(CONT('D)?|CONTINUED|V\.O\.|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?)$/i)) {
+                       line.match(/^[A-Z][A-Z\s']+(CONT('D)?|CONTINUED|V\.O\.|V\.O\.\)\ (CONT'D|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?)$/i)) {
                 // Personaggio - supporta anche casi come:
                 // MARIO (V.O.)
                 // MARIO (CONT'D)
