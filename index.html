@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convertitore da Fountain a EPUB</title>
+    <title>Fountain to EPUB Converter</title>
     <!-- Librerie esterne necessarie -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -269,21 +270,21 @@
 </head>
 <body>
     <header>
-        <h1>Convertitore da Fountain a EPUB</h1>
-        <p>Converti i tuoi file Fountain in EPUB mantenendo la formattazione standard</p>
+        <h1>Fountain to EPUB covnerter</h1>
+        <p>Convert your Fountain file to EPUB keeping standard format</p>
     </header>
     
     <main>
         <div class="container">
             <section class="input-section">
-                <h2>Inserisci la Sceneggiatura</h2>
+                <h2>Insert your script</h2>
                 
                 <div class="file-input">
-                    <label for="screenplay-file">Carica un file</label>
+                    <label for="screenplay-file">Upload a file</label>
                     <div class="file-drop" id="file-drop">
-                        <p>Trascina qui il tuo file Fountain (.fountain o .txt)</p>
-                        <p>oppure</p>
-                        <button type="button" id="file-select-btn">Seleziona un file</button>
+                        <p>Drop your file here (.fountain o .txt)</p>
+                        <p>or</p>
+                        <button type="button" id="file-select-btn">Select a file</button>
                     </div>
                     <input type="file" id="screenplay-file" accept=".fountain,.txt">
                 </div>
@@ -291,19 +292,19 @@
                 <div class="options">
                     <div class="option">
                         <input type="checkbox" id="include-page-numbers" checked>
-                        <label for="include-page-numbers">Includi numeri di pagina</label>
+                        <label for="include-page-numbers">Include page numbers</label>
                     </div>
                     <div class="option">
                         <input type="checkbox" id="calculate-pages" checked>
-                        <label for="calculate-pages">Calcola numeri di pagina (max 52 righe per pagina)</label>
+                        <label for="calculate-pages">Calculate page numbers (max 52 rows per page)</label>
                     </div>
                     <div class="option">
                         <input type="checkbox" id="include-metadata" checked>
-                        <label for="include-metadata">Includi metadati (titolo, autore, ecc.)</label>
+                        <label for="include-metadata">Include metadata (title, author, ecc.)</label>
                     </div>
                 </div>
                 
-                <button type="button" id="convert-btn">Converti in EPUB</button>
+                <button type="button" id="convert-btn">Convert to EPUB</button>
                 
                 <div id="status" class="status" style="display: none;"></div>
                 <div id="progress-container" class="progress-bar">
@@ -312,7 +313,7 @@
             </section>
             
             <section class="preview-section">
-                <h2>Anteprima</h2>
+                <h2>Preview</h2>
                 <div class="preview-content screenplay" id="preview">
                     <p class="title">LA PRIMINA</p>
                     <p class="credit">written by</p>
@@ -320,7 +321,7 @@
                     <p class="source">based on the short novel by Antonio De Rosa</p>
                     <p class="notes">SPEC SCRIPT<br>includes post-production dialogue<br>and omitted scenes</p>
                     <p class="copyright">(c) 2025 ADR</p>
-                    <p class="action">This is a story from Southern Italy, full of attempts to domesticate rules, and characters that seem invented. But it is true.</p>
+                    <p class="action">This is a story from Southern Italy, full of attempts to domesticate the rules, and characters that seem invented. But it is true.</p>
                     <p class="page-break">— Pagina 1 —</p>
                     <p class="scene-heading">INT. CASA DI MARIO - GIORNO</p>
                     <p class="action">Mario entra nell'appartamento e si guarda intorno. Posa la giacca su una sedia.</p>
@@ -330,7 +331,7 @@
                     <p class="transition">FADE TO:</p>
                 </div>
                 
-                <button type="button" id="download-btn">Scarica EPUB</button>
+                <button type="button" id="download-btn">Download EPUB</button>
             </section>
         </div>
     </main>
@@ -350,15 +351,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Variabili globali
     let screenplayElements = [];
-    let metadataInfo = {
-        title: "Sceneggiatura senza titolo",
-        author: "Autore anonimo",
-        credit: "",
-        source: "",
-        notes: "",
-        copyright: "",
-        draftDate: new Date().toLocaleDateString('it-IT')
-    };
+let metadataInfo = {
+    title: "",
+    author: "",
+    credit: "",
+    source: "",
+    notes: "",
+    copyright: "",
+    draftDate: new Date().toLocaleDateString('it-IT')
+};
 
     // Gestione del drag and drop
     fileDropArea.addEventListener('dragover', function(e) {
@@ -455,133 +456,97 @@ document.addEventListener('DOMContentLoaded', function() {
         let lineCount = 0; // Contatore per il calcolo delle pagine
         const MAX_LINES_PER_PAGE = 52; // 52 righe per pagina standard
         
-        // Verifichiamo se ci sono metadati (title page)
-        let inTitlePage = false;
-        let inMetadataSection = false;
-        let currentMetadataKey = null;
-        let metadataValues = {};
-        
-        // Resettiamo i metadati
-        metadataInfo = {
-            title: "",
-            author: "",
-            credit: "",
-            source: "",
-            notes: "",
-            copyright: "",
-            draftDate: new Date().toLocaleDateString('it-IT')
-        };
+let metadataInfo = {
+    title: "",
+    author: "",
+    credit: "",
+    source: "",
+    notes: "",
+    copyright: ""
+};
         
         let lineIndex = 0;
         let titlePageContentFound = false;
         
-        // Prima passiamo i metadati se presenti
-        if (lines[0] === '---') {
-            inTitlePage = true;
-            lineIndex = 1; // Iniziamo dalla seconda riga
-            
-            while (lineIndex < lines.length && lines[lineIndex] !== '---') {
-                const line = lines[lineIndex].trim();
-                titlePageContentFound = true;
-                
-                if (line.includes(':')) {
-                    const [key, value] = line.split(':', 2);
-                    currentMetadataKey = key.trim().toLowerCase();
-                    
-                    // Inizializziamo l'array per questo tipo di metadato
-                    if (!metadataValues[currentMetadataKey]) {
-                        metadataValues[currentMetadataKey] = [];
-                    }
-                    
-                    // Aggiungiamo il valore se presente sulla stessa riga
-                    const metadataValue = value.trim();
-                    if (metadataValue) {
-                        metadataValues[currentMetadataKey].push(metadataValue);
-                    }
-                } else if (currentMetadataKey && line) {
-                    // Continuazione di un metadato su più righe
-                    // Aggiungiamo ogni riga come elemento separato
-                    metadataValues[currentMetadataKey].push(line);
-                } else if (line === '') {
-                    // Riga vuota, continuiamo con lo stesso metadato ma aggiungiamo un separatore
-                    if (currentMetadataKey) {
-                        metadataValues[currentMetadataKey].push('');
-                    }
-                }
-                
-                lineIndex++;
-            }
-            
-            // Saltiamo la riga di chiusura dei metadati
-            if (lineIndex < lines.length && lines[lineIndex] === '---') {
-                lineIndex++;
-            }
-            
-            // Processiamo i metadati raccolti
-            if (metadataValues['title'] && metadataValues['title'].length > 0) {
-                metadataInfo.title = metadataValues['title'].join(' ').trim();
-            }
-            
-            if (metadataValues['author'] && metadataValues['author'].length > 0) {
-                metadataInfo.author = metadataValues['author'].join(' ').trim();
-            }
-            
-            if (metadataValues['credit'] && metadataValues['credit'].length > 0) {
-                metadataInfo.credit = metadataValues['credit'].join(' ').trim();
-            }
-            
-            if (metadataValues['source'] && metadataValues['source'].length > 0) {
-                metadataInfo.source = metadataValues['source'].join(' ').trim();
-            }
-            
-            if (metadataValues['copyright'] && metadataValues['copyright'].length > 0) {
-                metadataInfo.copyright = metadataValues['copyright'].join(' ').trim();
-            }
-            
-            if (metadataValues['notes'] && metadataValues['notes'].length > 0) {
-                // Per le note, manteniamo il formato multilinea
-                metadataInfo.notes = metadataValues['notes'].join('\n').trim();
-            }
-            
-            // Aggiungiamo gli elementi dei metadati
-            if (document.getElementById('include-metadata').checked && titlePageContentFound) {
-                elements.push({ type: 'title', content: metadataInfo.title, pageNumber: currentPage });
-                lineCount += 2; // Il titolo occupa circa 2 righe
-                
-                if (metadataInfo.credit) {
-                    elements.push({ type: 'credit', content: metadataInfo.credit, pageNumber: currentPage });
-                    lineCount += 1;
-                }
-                
-                if (metadataInfo.author) {
-                    elements.push({ type: 'author', content: metadataInfo.author, pageNumber: currentPage });
-                    lineCount += 1;
-                }
-                
-                if (metadataInfo.source) {
-                    elements.push({ type: 'source', content: metadataInfo.source, pageNumber: currentPage });
-                    lineCount += 2; // Fonte con spazio
-                }
-                
-                if (metadataInfo.notes) {
-                    elements.push({ type: 'notes', content: metadataInfo.notes, pageNumber: currentPage });
-                    // Le note occupano più righe in base al contenuto
-                    lineCount += metadataInfo.notes.split('\n').length + 2;
-                }
-                
-                if (metadataInfo.copyright) {
-                    elements.push({ type: 'copyright', content: metadataInfo.copyright, pageNumber: currentPage });
-                    lineCount += 2; // Copyright con spazio
-                }
-            }
+   
+// Prima passiamo i metadati se presenti
+if (lines.length > 0 && lines[0] === '---') {
+    let inMetadata = false;
+    
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (line === '---') {
+            break; // Fine della sezione metadati
         }
         
+        const metadataMatch = line.match(/^(\w+):\s*(.*)/);
+        if (metadataMatch) {
+            const key = metadataMatch[1].toLowerCase();
+            const value = metadataMatch[2].trim();
+            
+            // Gestione speciale per i campi principali
+            if (key === 'title' && value) {
+                metadataInfo.title = value;
+            } else if (key === 'author' && value) {
+                metadataInfo.author = value;
+            } else if (key === 'credit' && value) {
+                metadataInfo.credit = value;
+            } else if (key === 'source' && value) {
+                metadataInfo.source = value;
+            } else if (key === 'notes' && value) {
+                metadataInfo.notes = value;
+            } else if (key === 'copyright' && value) {
+                metadataInfo.copyright = value;
+            }
+        } else if (metadataInfo.notes && line) {
+            // Aggiungi righe aggiuntive alle note
+            metadataInfo.notes += '\n' + line;
+        }
+    }
+}
+            
+ // Aggiungiamo gli elementi dei metadati
+
+if (document.getElementById('include-metadata').checked) {
+    // Verifica e formatta ciascun campo
+    const fields = [
+        { key: 'title', type: 'title', defaultValue: "", lines: 2 },
+        { key: 'credit', type: 'credit', defaultValue: "", lines: 1 },
+        { key: 'author', type: 'author', defaultValue: "", lines: 1 },
+        { key: 'source', type: 'source', defaultValue: "", lines: 2 },
+        { key: 'notes', type: 'notes', defaultValue: "", lines: 2 },
+        { key: 'copyright', type: 'copyright', defaultValue: "", lines: 2 }
+    ];
+
+    fields.forEach(field => {
+        const value = metadataInfo[field.key] || field.defaultValue;
+        if (value) {
+            elements.push({
+                type: field.type,
+                content: value,
+                pageNumber: currentPage
+            });
+            lineCount += field.lines;
+            
+            // Aggiungi riga vuota dopo il source
+            if (field.key === 'source' && value) {
+                elements.push({
+                    type: 'action',
+                    content: '',
+                    pageNumber: currentPage
+                });
+                lineCount += 1;
+            }
+        }
+    });
+}        
         // Ora analizziamo il contenuto della sceneggiatura
         for (let i = lineIndex; i < lines.length; i++) {
             const line = lines[i].trim();
             
             // Gestione interruzione di pagina esplicita
-            if (line === "===") {
+            if (line.match(/^={3,}$/)) {  // Riconosce ===, ====, etc.
                 currentPage++;
                 lineCount = 0; // Reset del contatore righe
                 elements.push({ 
@@ -634,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 lineCount += 2; // Una transizione occupa una riga + spazio
             } else if (line.match(/^@.*/) || 
                        line.match(/^[A-Z][A-Z\s']+(\s*\([A-Za-z\s\.,']+\))?$/) ||
-                       line.match(/^[A-Z][A-Z\s']+(CONT('D)?|CONTINUED|V\.O\.|V\.O\.\)\ (CONT'D|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?)$/i)) {
+                       line.match(/^[A-Z][A-Z\s']+(CONT('D)?|CONTINUED|V\.O\.|V\.O\.\)\(CONT'D|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?)$/i)) {
                 // Personaggio - supporta anche casi come:
                 // MARIO (V.O.)
                 // MARIO (CONT'D)
@@ -705,46 +670,140 @@ document.addEventListener('DOMContentLoaded', function() {
         return elements;
     }
 
-    function renderPreview(elements) {
-        preview.innerHTML = '';
-        
-        let lastPageNumber = -1;
-        
-        elements.forEach(element => {
-            const p = document.createElement('p');
-            p.className = element.type;
+function renderPreview(elements) {
+    // Svuotiamo il contenitore di anteprima
+    preview.innerHTML = '';
+    
+    let lastPageNumber = -1;
+    
+    // Iteriamo su tutti gli elementi
+    elements.forEach(element => {
+        // Aggiungiamo l'interruzione di pagina se necessario
+        if (document.getElementById('include-page-numbers').checked &&
+            element.pageNumber > lastPageNumber &&
+            element.type !== 'page-break' &&
+            !['title', 'credit', 'author', 'source', 'notes', 'copyright'].includes(element.type)) {
+            lastPageNumber = element.pageNumber;
             
-            // Gestione speciale per le note che potrebbero essere multilinea
-            if (element.type === 'notes' && element.content.includes('\n')) {
-                p.innerHTML = element.content.replace(/\n/g, '<br>');
-            } else {
-                p.textContent = element.content;
+            if (lastPageNumber > 0) {
+                const pageBreak = document.createElement('p');
+                pageBreak.className = 'page-break';
+                pageBreak.textContent = `— Pagina ${lastPageNumber} —`;
+                preview.appendChild(pageBreak);
             }
-            
-            // Aggiungiamo l'interruzione di pagina se necessario e se l'opzione è attivata
-            if (document.getElementById('include-page-numbers').checked &&
-                element.pageNumber > lastPageNumber &&
-                element.type !== 'page-break' &&
-                element.type !== 'title' &&
-                element.type !== 'credit' &&
-                element.type !== 'author' &&
-                element.type !== 'source' &&
-                element.type !== 'notes' &&
-                element.type !== 'copyright') {
-                lastPageNumber = element.pageNumber;
+        }
+        
+        // Creiamo l'elemento con la classe appropriata
+        const p = document.createElement('p');
+        p.className = element.type;
+        
+        // Gestiamo in modo specifico ogni tipo di elemento
+        switch(element.type) {
+            case 'title':
+                // Titolo: centrato, in grassetto, nella parte superiore della pagina
+                p.style.textAlign = 'center';
+                p.style.fontWeight = 'bold';
+                p.style.fontSize = '1.5em';
+                p.style.marginTop = '3em';
+                p.style.marginBottom = '0.5em';
+                break;
                 
-                if (lastPageNumber > 0) { // Iniziamo da pagina 1
-                    const pageBreak = document.createElement('p');
-                    pageBreak.className = 'page-break';
-                    pageBreak.textContent = `— Pagina ${lastPageNumber} —`;
-                    preview.appendChild(pageBreak);
-                }
-            }
-            
-            preview.appendChild(p);
-        });
-    }
-
+            case 'credit':
+                // Credit: centrato sotto al titolo, senza riga vuota intermedia
+                p.style.textAlign = 'center';
+                p.style.marginBottom = '0.5em';
+                break;
+                
+            case 'author':
+                // Author: centrato sotto al credit, senza riga vuota intermedia
+                p.style.textAlign = 'center';
+                p.style.marginBottom = '1em';
+                break;
+                
+            case 'source':
+                // Source: centrato, con una riga vuota prima, in corsivo
+                p.style.textAlign = 'center';
+                p.style.fontStyle = 'italic';
+                p.style.marginTop = '1em';
+                p.style.marginBottom = '1em';
+                break;
+                
+            case 'notes':
+                // Notes: allineate a destra, nella parte inferiore della prima pagina
+                p.style.textAlign = 'right';
+                p.style.fontStyle = 'italic';
+                p.style.fontSize = '0.9em';
+                p.style.marginTop = '3em';
+                break;
+                
+            case 'copyright':
+                // Copyright: centrato sotto alle notes
+                p.style.textAlign = 'center';
+                p.style.fontSize = '0.9em';
+                p.style.marginTop = '2em';
+                break;
+                
+            case 'scene-heading':
+                // Intestazione di scena: in maiuscolo, grassetto, allineata a sinistra
+                p.style.textTransform = 'uppercase';
+                p.style.fontWeight = 'bold';
+                p.style.textAlign = 'left';
+                p.style.marginTop = '1.5em';
+                break;
+                
+            case 'character':
+                // Personaggio: in maiuscolo, quasi al centro pagina
+                p.style.textTransform = 'uppercase';
+                p.style.fontWeight = 'bold';
+                p.style.marginLeft = '15em';
+                p.style.marginTop = '1em';
+                break;
+                
+            case 'parenthetical':
+                // Parentetica: 4 caratteri prima rispetto al personaggio
+                p.style.marginLeft = '12em';
+                p.style.marginTop = '0';
+                break;
+                
+            case 'dialogue':
+                // Dialogo: 8 caratteri prima rispetto al personaggio
+                p.style.marginLeft = '8em';
+                p.style.marginRight = '8em';
+                p.style.marginTop = '0';
+                break;
+                
+            case 'transition':
+                // Transizione: in maiuscolo, allineata a destra
+                p.style.textTransform = 'uppercase';
+                p.style.textAlign = 'right';
+                p.style.marginTop = '1em';
+                break;
+                
+            case 'action':
+                // Azione: allineata a sinistra
+                p.style.textAlign = 'left';
+                p.style.marginTop = '1em';
+                break;
+                
+            case 'centered':
+                // Nota centrata
+                p.style.textAlign = 'center';
+                p.style.fontStyle = 'italic';
+                p.style.margin = '1em auto';
+                break;
+        }
+        
+        // Gestiamo i contenuti multilinea, in particolare le note
+        if (element.type === 'notes' && element.content.includes('\n')) {
+            p.innerHTML = element.content.replace(/\n/g, '<br>');
+        } else {
+            p.textContent = element.content;
+        }
+        
+        // Aggiungiamo l'elemento al contenitore di anteprima
+        preview.appendChild(p);
+    });
+}
     async function generateEpub() {
         try {
             showProgress(true, 10);
@@ -974,11 +1033,11 @@ document.addEventListener('DOMContentLoaded', function() {
         { type: 'copyright', content: '(c) 2025 ADR', pageNumber: 1 },
         { type: 'action', content: 'This is a story from Southern Italy, full of attempts to domesticate the rules, and characters that seem invented. But it is true.', pageNumber: 1 },
         { type: 'page-break', content: '— Pagina 1 —', pageNumber: 1 },
-        { type: 'scene-heading', content: 'INT. CASA DI MARIO - GIORNO', pageNumber: 1 },
-        { type: 'action', content: 'Mario entra nell\'appartamento e si guarda intorno. Posa la giacca su una sedia.', pageNumber: 1 },
+        { type: 'scene-heading', content: 'INT. CASA DI ANTONIO - GIORNO', pageNumber: 1 },
+        { type: 'action', content: 'Un'OPERATORE accende una telecamera ed alza il pollice al lato della macchina. Davanti a lui TERESA, una donna sui 35 anni, seduta, con le gambe accavallate, sorride nervosa.', pageNumber: 1 },
         { type: 'character', content: 'MARIO (V.O.)', pageNumber: 1 },
         { type: 'parenthetical', content: '(guardando intorno)', pageNumber: 1 },
-        { type: 'dialogue', content: 'Sono a casa! C\'è qualcuno?', pageNumber: 1 },
+        { type: 'dialogue', content: 'Allora, quando si è accorta che Antonio era pronto?', pageNumber: 1 },
         { type: 'transition', content: 'FADE TO:', pageNumber: 1 }
     ];
     
@@ -988,3 +1047,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+                    
