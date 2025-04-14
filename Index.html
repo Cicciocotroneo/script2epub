@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertitore da Fountain a EPUB</title>
+    <!-- Librerie esterne necessarie -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        body {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+        }
+        
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .input-section, .preview-section {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .file-input {
+            margin-bottom: 1.5rem;
+        }
+        
+        .file-input label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .file-drop {
+            border: 2px dashed var(--secondary-color);
+            border-radius: 4px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .file-drop:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .file-drop.active {
+            border-color: var(--accent-color);
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .options {
+            margin-bottom: 1.5rem;
+        }
+        
+        .option {
+            margin-bottom: 0.5rem;
+        }
+        
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--primary-color);
+        }
+        
+        .preview-content {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+            min-height: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .screenplay {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12pt;
+            line-height: 1;
+        }
+        
+        .screenplay .scene-heading {
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-top: 1.5em;
+            text-align: left;
+        }
+        
+        .screenplay .action {
+            text-align: left;
+            margin-top: 1em;
+        }
+        
+        .screenplay .character {
+            text-transform: uppercase;
+            margin-left: 15em;
+            margin-top: 1em;
+            font-weight: bold;
+        }
+        
+        .screenplay .parenthetical {
+            margin-left: 12em;
+            margin-top: 0;
+        }
+        
+        .screenplay .dialogue {
+            margin-left: 8em;
+            margin-right: 8em;
+            margin-top: 0;
+        }
+        
+        .screenplay .transition {
+            text-transform: uppercase;
+            text-align: right;
+            margin-top: 1em;
+        }
+        
+        .screenplay .page-break {
+            border-top: 1px dashed #aaa;
+            margin: 1.5em 0;
+            padding-top: 0.5em;
+            font-size: 0.8em;
+            color: #888;
+            text-align: right;
+        }
+        
+        .screenplay .title {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 3em;
+            margin-bottom: 0.5em;
+        }
+        
+        .screenplay .credit {
+            text-align: center;
+            margin-bottom: 0.5em;
+        }
+        
+        .screenplay .author {
+            text-align: center;
+            margin-bottom: 1em;
+        }
+        
+        .screenplay .source {
+            text-align: center;
+            margin-top: 1em;
+            margin-bottom: 1em;
+            font-style: italic;
+        }
+        
+        .screenplay .notes {
+            text-align: right;
+            margin-top: 3em;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .screenplay .copyright {
+            text-align: center;
+            margin-top: 2em;
+            font-size: 0.9em;
+        }
+        
+        .screenplay .centered {
+            text-align: center;
+            margin: 1em auto;
+            font-style: italic;
+        }
+        
+        .status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f1f1f1;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: var(--secondary-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Convertitore da Fountain a EPUB</h1>
+        <p>Converti i tuoi file Fountain in EPUB mantenendo la formattazione standard</p>
+    </header>
+    
+    <main>
+        <div class="container">
+            <section class="input-section">
+                <h2>Inserisci la Sceneggiatura</h2>
+                
+                <div class="file-input">
+                    <label for="screenplay-file">Carica un file</label>
+                    <div class="file-drop" id="file-drop">
+                        <p>Trascina qui il tuo file Fountain (.fountain o .txt)</p>
+                        <p>oppure</p>
+                        <button type="button" id="file-select-btn">Seleziona un file</button>
+                    </div>
+                    <input type="file" id="screenplay-file" accept=".fountain,.txt">
+                </div>
+                
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="include-page-numbers" checked>
+                        <label for="include-page-numbers">Includi numeri di pagina</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="calculate-pages" checked>
+                        <label for="calculate-pages">Calcola numeri di pagina (max 52 righe per pagina)</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="include-metadata" checked>
+                        <label for="include-metadata">Includi metadati (titolo, autore, ecc.)</label>
+                    </div>
+                </div>
+                
+                <button type="button" id="convert-btn">Converti in EPUB</button>
+                
+                <div id="status" class="status" style="display: none;"></div>
+                <div id="progress-container" class="progress-bar">
+                    <div id="progress" class="progress"></div>
+                </div>
+            </section>
+            
+            <section class="preview-section">
+                <h2>Anteprima</h2>
+                <div class="preview-content screenplay" id="preview">
+                    <p class="title">LA PRIMINA</p>
+                    <p class="credit">written by</p>
+                    <p class="author">Antonio De Rosa</p>
+                    <p class="source">based on the short novel by Antonio De Rosa</p>
+                    <p class="notes">SPEC SCRIPT<br>includes post-production dialogue<br>and omitted scenes</p>
+                    <p class="copyright">(c) 2025 ADR</p>
+                    <p class="action">This is a story from Southern Italy, full of attempts to domesticate the rules, and characters that seem invented. But it is true.</p>
+                    <p class="page-break">— Pagina 1 —</p>
+                    <p class="scene-heading">INT. CASA DI MARIO - GIORNO</p>
+                    <p class="action">Mario entra nell'appartamento e si guarda intorno. Posa la giacca su una sedia.</p>
+                    <p class="character">MARIO (V.O.)</p>
+                    <p class="parenthetical">(guardando intorno)</p>
+                    <p class="dialogue">Sono a casa! C'è qualcuno?</p>
+                    <p class="transition">FADE TO:</p>
+                </div>
+                
+                <button type="button" id="download-btn">Scarica EPUB</button>
+            </section>
+        </div>
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementi DOM
+    const fileDropArea = document.getElementById('file-drop');
+    const fileInput = document.getElementById('screenplay-file');
+    const fileSelectBtn = document.getElementById('file-select-btn');
+    const convertBtn = document.getElementById('convert-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const preview = document.getElementById('preview');
+    const statusElement = document.getElementById('status');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress');
+    
+    // Variabili globali
+    let screenplayElements = [];
+    let metadataInfo = {
+        title: "Sceneggiatura senza titolo",
+        author: "Autore anonimo",
+        credit: "",
+        source: "",
+        notes: "",
+        copyright: "",
+        draftDate: new Date().toLocaleDateString('it-IT')
+    };
+
+    // Gestione del drag and drop
+    fileDropArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileDropArea.classList.add('active');
+    });
+
+    fileDropArea.addEventListener('dragleave', function() {
+        fileDropArea.classList.remove('active');
+    });
+
+    fileDropArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileDropArea.classList.remove('active');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect(e.dataTransfer.files[0]);
+        }
+    });
+
+    // Usa onclick invece di addEventListener per maggiore compatibilità
+    fileSelectBtn.onclick = function() {
+        fileInput.click();
+    };
+
+    fileInput.onchange = function() {
+        if (fileInput.files.length) {
+            handleFileSelect(fileInput.files[0]);
+        }
+    };
+
+    // Gestione della conversione
+    convertBtn.onclick = function() {
+        if (!fileInput.files.length) {
+            showStatus('Seleziona prima un file da convertire', 'error');
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        convertFile(file);
+    };
+
+    downloadBtn.onclick = function() {
+        if (!screenplayElements.length) {
+            showStatus('Non c\'è nulla da scaricare. Converti prima un file.', 'error');
+            return;
+        }
+        
+        generateEpub();
+    };
+
+    // Funzioni di supporto
+    function handleFileSelect(file) {
+        const fileName = file.name;
+        const fileExtension = fileName.split('.').pop().toLowerCase();
+        
+        showProgress(true, 10);
+        
+        if (fileExtension === 'fountain' || fileExtension === 'txt') {
+            readFountainFile(file);
+        } else {
+            showStatus('Formato file non supportato. Usa .fountain o .txt', 'error');
+            showProgress(false);
+        }
+    }
+
+    function readFountainFile(file) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            showProgress(true, 50);
+            const content = e.target.result;
+            const parsedContent = parseFountain(content);
+            screenplayElements = parsedContent;
+            renderPreview(parsedContent);
+            showStatus('File Fountain caricato con successo', 'success');
+            showProgress(true, 100);
+            setTimeout(function() { showProgress(false); }, 500);
+        };
+        
+        reader.onerror = function() {
+            showStatus('Errore nella lettura del file', 'error');
+            showProgress(false);
+        };
+        
+        reader.readAsText(file);
+    }
+
+    function parseFountain(content) {
+        const lines = content.split(/\r?\n/);
+        const elements = [];
+        let currentPage = 1;
+        let lineCount = 0; // Contatore per il calcolo delle pagine
+        const MAX_LINES_PER_PAGE = 52; // 52 righe per pagina standard
+        
+        // Verifichiamo se ci sono metadati (title page)
+        let inTitlePage = false;
+        let inMetadataSection = false;
+        let currentMetadataKey = null;
+        let metadataValues = {};
+        
+        // Resettiamo i metadati
+        metadataInfo = {
+            title: "Sceneggiatura senza titolo",
+            author: "Autore anonimo",
+            credit: "",
+            source: "",
+            notes: "",
+            copyright: "",
+            draftDate: new Date().toLocaleDateString('it-IT')
+        };
+        
+        let lineIndex = 0;
+        let titlePageContentFound = false;
+        
+        // Prima passiamo i metadati se presenti
+        if (lines[0] === '---') {
+            inTitlePage = true;
+            lineIndex = 1; // Iniziamo dalla seconda riga
+            
+            while (lineIndex < lines.length && lines[lineIndex] !== '---') {
+                const line = lines[lineIndex].trim();
+                titlePageContentFound = true;
+                
+                if (line.includes(':')) {
+                    const [key, value] = line.split(':', 2);
+                    currentMetadataKey = key.trim().toLowerCase();
+                    
+                    // Inizializziamo l'array per questo tipo di metadato
+                    if (!metadataValues[currentMetadataKey]) {
+                        metadataValues[currentMetadataKey] = [];
+                    }
+                    
+                    // Aggiungiamo il valore se presente sulla stessa riga
+                    const metadataValue = value.trim();
+                    if (metadataValue) {
+                        metadataValues[currentMetadataKey].push(metadataValue);
+                    }
+                } else if (currentMetadataKey && line) {
+                    // Continuazione di un metadato su più righe
+                    // Aggiungiamo ogni riga come elemento separato
+                    metadataValues[currentMetadataKey].push(line);
+                } else if (line === '') {
+                    // Riga vuota, continuiamo con lo stesso metadato ma aggiungiamo un separatore
+                    if (currentMetadataKey) {
+                        metadataValues[currentMetadataKey].push('');
+                    }
+                }
+                
+                lineIndex++;
+            }
+            
+            // Saltiamo la riga di chiusura dei metadati
+            if (lineIndex < lines.length && lines[lineIndex] === '---') {
+                lineIndex++;
+            }
+            
+            // Processiamo i metadati raccolti
+            if (metadataValues['title'] && metadataValues['title'].length > 0) {
+                metadataInfo.title = metadataValues['title'].join(' ').trim();
+            }
+            
+            if (metadataValues['author'] && metadataValues['author'].length > 0) {
+                metadataInfo.author = metadataValues['author'].join(' ').trim();
+            }
+            
+            if (metadataValues['credit'] && metadataValues['credit'].length > 0) {
+                metadataInfo.credit = metadataValues['credit'].join(' ').trim();
+            }
+            
+            if (metadataValues['source'] && metadataValues['source'].length > 0) {
+                metadataInfo.source = metadataValues['source'].join(' ').trim();
+            }
+            
+            if (metadataValues['copyright'] && metadataValues['copyright'].length > 0) {
+                metadataInfo.copyright = metadataValues['copyright'].join(' ').trim();
+            }
+            
+            if (metadataValues['notes'] && metadataValues['notes'].length > 0) {
+                // Per le note, manteniamo il formato multilinea
+                metadataInfo.notes = metadataValues['notes'].join('\n').trim();
+            }
+            
+            // Aggiungiamo gli elementi dei metadati
+            if (document.getElementById('include-metadata').checked && titlePageContentFound) {
+                elements.push({ type: 'title', content: metadataInfo.title, pageNumber: currentPage });
+                lineCount += 2; // Il titolo occupa circa 2 righe
+                
+                if (metadataInfo.credit) {
+                    elements.push({ type: 'credit', content: metadataInfo.credit, pageNumber: currentPage });
+                    lineCount += 1;
+                }
+                
+                if (metadataInfo.author) {
+                    elements.push({ type: 'author', content: metadataInfo.author, pageNumber: currentPage });
+                    lineCount += 1;
+                }
+                
+                if (metadataInfo.source) {
+                    elements.push({ type: 'source', content: metadataInfo.source, pageNumber: currentPage });
+                    lineCount += 2; // Fonte con spazio
+                }
+                
+                if (metadataInfo.notes) {
+                    elements.push({ type: 'notes', content: metadataInfo.notes, pageNumber: currentPage });
+                    // Le note occupano più righe in base al contenuto
+                    lineCount += metadataInfo.notes.split('\n').length + 2;
+                }
+                
+                if (metadataInfo.copyright) {
+                    elements.push({ type: 'copyright', content: metadataInfo.copyright, pageNumber: currentPage });
+                    lineCount += 2; // Copyright con spazio
+                }
+            }
+        }
+        
+        // Ora analizziamo il contenuto della sceneggiatura
+        for (let i = lineIndex; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            // Gestione interruzione di pagina esplicita
+            if (line === "===") {
+                currentPage++;
+                lineCount = 0; // Reset del contatore righe
+                elements.push({ 
+                    type: 'page-break', 
+                    content: `— Pagina ${currentPage} —`, 
+                    pageNumber: currentPage 
+                });
+                continue;
+            }
+            
+            // Calcolo automatico delle interruzioni di pagina se l'opzione è attiva
+            if (document.getElementById('calculate-pages').checked && lineCount >= MAX_LINES_PER_PAGE) {
+                currentPage++;
+                lineCount = 0; // Reset del contatore righe
+                elements.push({ 
+                    type: 'page-break', 
+                    content: `— Pagina ${currentPage} —`, 
+                    pageNumber: currentPage 
+                });
+            }
+            
+            // Saltiamo le righe vuote ma le contiamo per il calcolo delle pagine
+            if (line === '') {
+                lineCount++; // Una riga vuota conta come una riga
+                continue;
+            }
+            
+            // Rilevamento del tipo di elemento basato sulla sintassi Fountain
+            if (line.match(/^(INT|EXT|I\/E|EST|INT\/EST)\./i) || line.startsWith('.')) {
+                // Intestazione di scena
+                elements.push({ 
+                    type: 'scene-heading', 
+                    content: line.replace(/^\./g, ''), 
+                    pageNumber: currentPage 
+                });
+                lineCount += 2; // Un'intestazione occupa una riga + spazio
+            } else if (line.match(/^[A-Z][A-Z\s]+:$/) || 
+                       line.match(/^>.*/) || 
+                       line.match(/^\*\*[A-Z][A-Z\s]+:\*\*$/) ||
+                       line === "**FADE IN:**" ||
+                       line === "**FADE OUT:**") {
+                // Transizione - supporta anche le transizioni con asterischi
+                // Rimuoviamo i > e gli asterischi se presenti
+                const cleanLine = line.replace(/^>/, '').replace(/\*\*/g, '').trim();
+                elements.push({ 
+                    type: 'transition', 
+                    content: cleanLine, 
+                    pageNumber: currentPage 
+                });
+                lineCount += 2; // Una transizione occupa una riga + spazio
+            } else if (line.match(/^@.*/) || 
+                       line.match(/^[A-Z][A-Z\s']+(\s*\([A-Za-z\s\.,']+\))?$/) ||
+                       line.match(/^[A-Z][A-Z\s']+(CONT('D)?|CONTINUED|V\.O\.|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?)$/i)) {
+                // Personaggio - supporta anche casi come:
+                // MARIO (V.O.)
+                // MARIO (CONT'D)
+                // MARIO CONTINUED
+                // MARIO (FILTERED)
+                // e varianti
+                
+                // Rimuoviamo il @ se presente
+                const characterName = line.replace(/^@/, '');
+                elements.push({ 
+                    type: 'character', 
+                    content: characterName, 
+                    pageNumber: currentPage 
+                });
+                lineCount += 1; // Un personaggio occupa una riga
+                
+                // Controlliamo se la riga successiva è una parentetica
+                if (i + 1 < lines.length && lines[i + 1].trim().match(/^\(.+\)$/)) {
+                    i++;
+                    elements.push({ 
+                        type: 'parenthetical', 
+                        content: lines[i].trim(), 
+                        pageNumber: currentPage 
+                    });
+                    lineCount += 1; // Una parentetica occupa una riga
+                }
+                
+                // Le righe successive fino a una riga vuota sono dialoghi
+                let j = i + 1;
+                while (j < lines.length && lines[j].trim() !== '' && 
+                       !lines[j].trim().match(/^(INT\.|EXT\.|I\/E\.|EST\.|INT\/EST\.|\.|\>|[A-Z][A-Z\s]+:|\*\*[A-Z][A-Z\s]+:\*\*|@|[A-Z][A-Z\s]+(\([A-Za-z\s]+\))?)$/)) {
+                    if (!lines[j].trim().match(/^\(.+\)$/)) { // Non è una parentetica
+                        elements.push({ 
+                            type: 'dialogue', 
+                            content: lines[j].trim(), 
+                            pageNumber: currentPage 
+                        });
+                        lineCount += Math.ceil(lines[j].trim().length / 60); // Un dialogo occupa righe in base alla lunghezza
+                    }
+                    j++;
+                }
+                i = j - 1;
+            } else if (line.startsWith('~') && line.endsWith('~')) {
+                // Nota di scena centrata
+                elements.push({ 
+                    type: 'centered', 
+                    content: line.substring(1, line.length - 1), 
+                    pageNumber: currentPage 
+                });
+                lineCount += 2; // Una nota centrata occupa una riga + spazio
+            } else if (line.startsWith('[[') && line.endsWith(']]')) {
+                // Commento - non lo includiamo nell'output
+                continue;
+            } else if (line.startsWith('#')) {
+                // Intestazione della sezione - non la includiamo nell'output per EPUB
+                continue;
+            } else {
+                // Azione per default
+                elements.push({ 
+                    type: 'action', 
+                    content: line, 
+                    pageNumber: currentPage 
+                });
+                lineCount += Math.ceil(line.length / 60); // Un'azione occupa righe in base alla lunghezza
+            }
+        }
+        
+        return elements;
+    }
+
+    function renderPreview(elements) {
+        preview.innerHTML = '';
+        
+        let lastPageNumber = -1;
+        
+        elements.forEach(element => {
+            const p = document.createElement('p');
+            p.className = element.type;
+            
+            // Gestione speciale per le note che potrebbero essere multilinea
+            if (element.type === 'notes' && element.content.includes('\n')) {
+                p.innerHTML = element.content.replace(/\n/g, '<br>');
+            } else {
+                p.textContent = element.content;
+            }
+            
+            // Aggiungiamo l'interruzione di pagina se necessario e se l'opzione è attivata
+            if (document.getElementById('include-page-numbers').checked &&
+                element.pageNumber > lastPageNumber &&
+                element.type !== 'page-break' &&
+                element.type !== 'title' &&
+                element.type !== 'credit' &&
+                element.type !== 'author' &&
+                element.type !== 'source' &&
+                element.type !== 'notes' &&
+                element.type !== 'copyright') {
+                lastPageNumber = element.pageNumber;
+                
+                if (lastPageNumber > 0) { // Iniziamo da pagina 1
+                    const pageBreak = document.createElement('p');
+                    pageBreak.className = 'page-break';
+                    pageBreak.textContent = `— Pagina ${lastPageNumber} —`;
+                    preview.appendChild(pageBreak);
+                }
+            }
+            
+            preview.appendChild(p);
+        });
+    }
+
+    async function generateEpub() {
+        try {
+            showProgress(true, 10);
+            showStatus('Generazione EPUB in corso...', 'success');
+            
+            // Creiamo un nuovo oggetto JSZip
+            const zip = new JSZip();
+            
+            // Aggiungiamo il file mimetype (deve essere il primo senza compressione)
+            zip.file("mimetype", "application/epub+zip", {compression: "STORE"});
+            
+            // Creiamo la struttura META-INF
+            zip.folder("META-INF").file("container.xml", 
+                `<?xml version="1.0" encoding="UTF-8"?>
+                <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+                    <rootfiles>
+                        <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+                    </rootfiles>
+                </container>`
+            );
+            
+            // Creiamo la cartella OEBPS
+            const oebps = zip.folder("OEBPS");
+            
+            // Creiamo il file CSS
+            oebps.file("style.css", 
+                `.scene-heading {
+                    text-transform: uppercase;
+                    font-weight: bold;
+                    margin-top: 1.5em;
+                    text-align: left;
+                }
+                .action {
+                    text-align: left;
+                    margin-top: 1em;
+                }
+                .character {
+                    text-transform: uppercase;
+                    margin-left: 15em;
+                    margin-top: 1em;
+                    font-weight: bold;
+                }
+                .parenthetical {
+                    margin-left: 12em;
+                    margin-top: 0;
+                }
+                .dialogue {
+                    margin-left: 8em;
+                    margin-right: 8em;
+                    margin-top: 0;
+                }
+                .transition {
+                    text-transform: uppercase;
+                    text-align: right;
+                    margin-top: 1em;
+                }
+                .page-break {
+                    border-top: 1px dashed #aaa;
+                    margin: 1.5em 0;
+                    padding-top: 0.5em;
+                    font-size: 0.8em;
+                    color: #888;
+                    text-align: right;
+                }
+                .title {
+                    text-align: center;
+                    font-size: 1.5em;
+                    font-weight: bold;
+                    margin-top: 3em;
+                    margin-bottom: 0.5em;
+                }
+                .credit {
+                    text-align: center;
+                    margin-bottom: 0.5em;
+                }
+                .author {
+                    text-align: center;
+                    margin-bottom: 1em;
+                }
+                .source {
+                    text-align: center;
+                    margin-top: 1em;
+                    margin-bottom: 1em;
+                    font-style: italic;
+                }
+                .notes {
+                    text-align: right;
+                    margin-top: 3em;
+                    font-style: italic;
+                    font-size: 0.9em;
+                }
+                .copyright {
+                    text-align: center;
+                    margin-top: 2em;
+                    font-size: 0.9em;
+                }
+                .centered {
+                    text-align: center;
+                    margin: 1em auto;
+                    font-style: italic;
+                }`
+            );
+            
+            // Creiamo il file content.opf
+            oebps.file("content.opf", 
+                `<?xml version="1.0" encoding="UTF-8"?>
+                <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+                    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+                        <dc:title>${metadataInfo.title}</dc:title>
+                        <dc:creator>${metadataInfo.author}</dc:creator>
+                        <dc:identifier id="uid">screenplay-${Date.now()}</dc:identifier>
+                        <dc:language>it</dc:language>
+                        <meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta>
+                    </metadata>
+                    <manifest>
+                        <item id="screenplay" href="screenplay.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+                        <item id="css" href="style.css" media-type="text/css"/>
+                    </manifest>
+                    <spine>
+                        <itemref idref="screenplay"/>
+                    </spine>
+                </package>`
+            );
+            
+            showProgress(true, 50);
+            
+            // Creiamo il contenuto HTML
+            let screenplayHtml = `<?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE html>
+                <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+                <head>
+                    <title>${metadataInfo.title}</title>
+                    <meta charset="utf-8"/>
+                    <link rel="stylesheet" type="text/css" href="style.css"/>
+                </head>
+                <body>`;
+            
+            // Aggiungiamo gli elementi della sceneggiatura
+            screenplayElements.forEach(function(element) {
+                if (element.type === 'notes' && element.content.includes('\n')) {
+                    // Gestione speciale per le note multilinea
+                    screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content).replace(/\n/g, '<br/>')}</p>\n`;
+                } else {
+                    screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content)}</p>\n`;
+                }
+            });
+            
+            screenplayHtml += `</body></html>`;
+            
+            oebps.file("screenplay.xhtml", screenplayHtml);
+            
+            showProgress(true, 80);
+            
+            // Generiamo il file EPUB
+            const content = await zip.generateAsync({
+                type: "blob",
+                mimeType: "application/epub+zip",
+                compression: "DEFLATE",
+                compressionOptions: {
+                    level: 9
+                }
+            }, function(metadata) {
+                const percentComplete = 80 + Math.floor(metadata.percent * 0.2);
+                showProgress(true, percentComplete);
+            });
+            
+            // Creiamo un nome file basato sul titolo
+            const filename = `${metadataInfo.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.epub`;
+            
+            // Scarichiamo il file
+            saveAs(content, filename);
+            
+            showStatus('EPUB generato con successo!', 'success');
+            showProgress(true, 100);
+            setTimeout(function() { showProgress(false); }, 500);
+            
+        } catch (error) {
+            console.error('Errore nella generazione dell\'EPUB:', error);
+            showStatus('Errore nella generazione dell\'EPUB: ' + error.message, 'error');
+            showProgress(false);
+        }
+    }
+
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    function convertFile(file) {
+        showStatus('Conversione in corso...', 'success');
+        handleFileSelect(file);
+    }
+
+    function showStatus(message, type) {
+        statusElement.textContent = message;
+        statusElement.className = `status ${type}`;
+        statusElement.style.display = 'block';
+        
+        // Nascondi il messaggio dopo 5 secondi
+        setTimeout(function() {
+            statusElement.style.display = 'none';
+        }, 5000);
+    }
+    
+    function showProgress(show, percent = 0) {
+        if (show) {
+            progressContainer.style.display = 'block';
+            progressBar.style.width = `${percent}%`;
+        } else {
+            progressContainer.style.display = 'none';
+        }
+    }
+
+    // Inizializza con un esempio
+    const exampleContent = [
+        { type: 'title', content: 'LA PRIMINA', pageNumber: 1 },
+        { type: 'credit', content: 'written by', pageNumber: 1 },
+        { type: 'author', content: 'Antonio De Rosa', pageNumber: 1 },
+        { type: 'source', content: 'based on the short novel by Antonio De Rosa', pageNumber: 1 },
+        { type: 'notes', content: 'SPEC SCRIPT\nincludes post-production dialogue\nand omitted scenes', pageNumber: 1 },
+        { type: 'copyright', content: '(c) 2025 ADR', pageNumber: 1 },
+        { type: 'action', content: 'This is a story from Southern Italy, full of attempts to domesticate the rules, and characters that seem invented. But it is true.', pageNumber: 1 },
+        { type: 'page-break', content: '— Pagina 1 —', pageNumber: 1 },
+        { type: 'scene-heading', content: 'INT. CASA DI MARIO - GIORNO', pageNumber: 1 },
+        { type: 'action', content: 'Mario entra nell\'appartamento e si guarda intorno. Posa la giacca su una sedia.', pageNumber: 1 },
+        { type: 'character', content: 'MARIO (V.O.)', pageNumber: 1 },
+        { type: 'parenthetical', content: '(guardando intorno)', pageNumber: 1 },
+        { type: 'dialogue', content: 'Sono a casa! C\'è qualcuno?', pageNumber: 1 },
+        { type: 'transition', content: 'FADE TO:', pageNumber: 1 }
+    ];
+    
+    screenplayElements = exampleContent;
+    renderPreview(exampleContent);
+});
+</script>
+</body>
+</html>
