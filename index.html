@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convertitore da Fountain a EPUB</title>
+    <title>Fountain to EPUB converter</title>
     <!-- Librerie esterne necessarie -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -269,21 +269,21 @@
 </head>
 <body>
     <header>
-        <h1>Convertitore da Fountain a EPUB</h1>
-        <p>Converti i tuoi file Fountain in EPUB mantenendo la formattazione standard</p>
+        <h1>Fountain to EPUB converter</h1>
+        <p>Convert your Fountain files to EPUB keeping standard formatting. <strong>Please note that this website is intended for study purposes only and it refers to the fountain format as published at <a href="https://fountain.io/" target="_blank">Fountain.io</a>I am available to delete this page upon request of the rights holders. Reach out me <a href="https://bsky.app/profile/antonioderosa.bsky.social" target="_blank">here. </p>
     </header>
     
     <main>
         <div class="container">
             <section class="input-section">
-                <h2>Inserisci la Sceneggiatura</h2>
+                <h2>Upload your script</h2>
                 
                 <div class="file-input">
-                    <label for="screenplay-file">Carica un file</label>
+                    <label for="screenplay-file">Upload a file</label>
                     <div class="file-drop" id="file-drop">
-                        <p>Trascina qui il tuo file Fountain (.fountain o .txt)</p>
+                        <p>Drag your file here (.fountain or .txt)</p>
                         <p>oppure</p>
-                        <button type="button" id="file-select-btn">Seleziona un file</button>
+                        <button type="button" id="file-select-btn">Select a file</button>
                     </div>
                     <input type="file" id="screenplay-file" accept=".fountain,.txt">
                 </div>
@@ -291,19 +291,19 @@
                 <div class="options">
                     <div class="option">
                         <input type="checkbox" id="include-page-numbers" checked>
-                        <label for="include-page-numbers">Includi numeri di pagina</label>
+                        <label for="include-page-numbers">Include page numbers </label>
                     </div>
                     <div class="option">
                         <input type="checkbox" id="calculate-pages" checked>
-                        <label for="calculate-pages">Calcola numeri di pagina (max 52 righe per pagina)</label>
+                        <label for="calculate-pages">Calculate pagenumbers (max 52 rows per page)</label>
                     </div>
                     <div class="option">
                         <input type="checkbox" id="include-metadata" checked>
-                        <label for="include-metadata">Includi metadati (titolo, autore, ecc.)</label>
+                        <label for="include-metadata">Include metadata (title, authore, ecc.)</label>
                     </div>
                 </div>
                 
-                <button type="button" id="convert-btn">Converti in EPUB</button>
+                <button type="button" id="convert-btn">Convert to EPUB</button>
                 
                 <div id="status" class="status" style="display: none;"></div>
                 <div id="progress-container" class="progress-bar">
@@ -312,7 +312,7 @@
             </section>
             
             <section class="preview-section">
-                <h2>Anteprima</h2>
+                <h2>Preview</h2>
                 <div class="preview-content screenplay" id="preview">
                     <p class="title">LA PRIMINA</p>
                     <p class="credit">written by</p>
@@ -320,7 +320,7 @@
                     <p class="source">based on the short novel by Antonio De Rosa</p>
                     <p class="notes">SPEC SCRIPT<br>includes post-production dialogue<br>and omitted scenes</p>
                     <p class="copyright">(c) 2025 ADR</p>
-                    <p class="action">This is a story from Southern Italy, full of attempts to domesticate the rules, and characters that seem invented. But it is true.</p>
+                    <p class="action">This is a story from Southern Italy, full of attempts to domesticate rules, and characters that seem invented. But it is true.</p>
                     <p class="page-break">— Pagina 1 —</p>
                     <p class="scene-heading">INT. CASA DI MARIO - GIORNO</p>
                     <p class="action">Mario entra nell'appartamento e si guarda intorno. Posa la giacca su una sedia.</p>
@@ -330,7 +330,7 @@
                     <p class="transition">FADE TO:</p>
                 </div>
                 
-                <button type="button" id="download-btn">Scarica EPUB</button>
+                <button type="button" id="download-btn">Download EPUB</button>
             </section>
         </div>
     </main>
