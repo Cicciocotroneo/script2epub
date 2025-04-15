@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 lineCount = 0; // Reset del contatore righe
                 elements.push({ 
                     type: 'page-break', 
-                    content: `— Pagina ${currentPage} —`, 
+                    content: `— min\(appr\) ${currentPage} —`, 
                     pageNumber: currentPage 
                 });
             }
@@ -797,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (lastPageNumber > 0) { // Iniziamo da pagina 1
                     const pageBreak = document.createElement('p');
                     pageBreak.className = 'page-break';
-                    pageBreak.textContent = `— Pagina ${lastPageNumber} —`;
+                    pageBreak.textContent = `— min\(appr\) ${lastPageNumber} —`;
                     preview.appendChild(pageBreak);
                 }
             }
