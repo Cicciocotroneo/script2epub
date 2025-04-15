@@ -7,7 +7,7 @@
     <!-- Librerie esterne necessarie -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    
+
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -16,20 +16,20 @@
             --light-color: #ecf0f1;
             --dark-color: #34495e;
         }
-        
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Courier New', Courier, monospace;
         }
-        
+
         body {
             background-color: var(--light-color);
             color: var(--primary-color);
             line-height: 1.6;
         }
-        
+
         header {
             background-color: var(--primary-color);
             color: white;
@@ -37,51 +37,51 @@
             padding: 1rem;
             margin-bottom: 2rem;
         }
-        
+
         h1 {
             font-size: 2rem;
         }
-        
+
         main {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
         }
-        
+
         .container {
             display: grid;
             grid-template-columns: 1fr;
             gap: 2rem;
         }
-        
+
         @media (min-width: 768px) {
             .container {
                 grid-template-columns: 1fr 1fr;
             }
         }
-        
+
         .input-section, .preview-section {
             background-color: white;
             padding: 1.5rem;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         h2 {
             margin-bottom: 1rem;
             color: var(--primary-color);
         }
-        
+
         .file-input {
             margin-bottom: 1.5rem;
         }
-        
+
         .file-input label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: bold;
         }
-        
+
         .file-drop {
             border: 2px dashed var(--secondary-color);
             border-radius: 4px;
@@ -90,28 +90,28 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        
+
         .file-drop:hover {
             background-color: rgba(52, 152, 219, 0.1);
         }
-        
+
         .file-drop.active {
             border-color: var(--accent-color);
             background-color: rgba(231, 76, 60, 0.1);
         }
-        
+
         input[type="file"] {
             display: none;
         }
-        
+
         .options {
             margin-bottom: 1.5rem;
         }
-        
+
         .option {
             margin-bottom: 0.5rem;
         }
-        
+
         button {
             background-color: var(--secondary-color);
             color: white;
@@ -122,11 +122,11 @@
             font-weight: bold;
             transition: background-color 0.3s;
         }
-        
+
         button:hover {
             background-color: var(--primary-color);
         }
-        
+
         .preview-content {
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -137,49 +137,49 @@
             white-space: pre-wrap;
             font-family: 'Courier New', Courier, monospace;
         }
-        
+
         .screenplay {
             font-family: 'Courier New', Courier, monospace;
             font-size: 12pt;
             line-height: 1;
         }
-        
+
         .screenplay .scene-heading {
             text-transform: uppercase;
             font-weight: bold;
             margin-top: 1.5em;
             text-align: left;
         }
-        
+
         .screenplay .action {
             text-align: left;
             margin-top: 1em;
         }
-        
+
         .screenplay .character {
             text-transform: uppercase;
             margin-left: 15em;
             margin-top: 1em;
             font-weight: bold;
         }
-        
+
         .screenplay .parenthetical {
             margin-left: 12em;
             margin-top: 0;
         }
-        
+
         .screenplay .dialogue {
             margin-left: 8em;
             margin-right: 8em;
             margin-top: 0;
         }
-        
+
         .screenplay .transition {
             text-transform: uppercase;
             text-align: right;
             margin-top: 1em;
         }
-        
+
         .screenplay .page-break {
             border-top: 1px dashed #aaa;
             margin: 1.5em 0;
@@ -188,7 +188,7 @@
             color: #888;
             text-align: right;
         }
-        
+
         .screenplay .title {
             text-align: center;
             font-size: 1.5em;
@@ -196,59 +196,59 @@
             margin-top: 3em;
             margin-bottom: 0.5em;
         }
-        
+
         .screenplay .credit {
             text-align: center;
             margin-bottom: 0.5em;
         }
-        
+
         .screenplay .author {
             text-align: center;
             margin-bottom: 1em;
         }
-        
+
         .screenplay .source {
             text-align: center;
             margin-top: 1em;
             margin-bottom: 1em;
             font-style: italic;
         }
-        
+
         .screenplay .notes {
             text-align: right;
             margin-top: 3em;
             font-style: italic;
             font-size: 0.9em;
         }
-        
+
         .screenplay .copyright {
             text-align: center;
             margin-top: 2em;
             font-size: 0.9em;
         }
-        
+
         .screenplay .centered {
             text-align: center;
             margin: 1em auto;
             font-style: italic;
         }
-        
+
         .status {
             margin-top: 1rem;
             padding: 0.5rem;
             border-radius: 4px;
         }
-        
+
         .success {
             background-color: #d4edda;
             color: #155724;
         }
-        
+
         .error {
             background-color: #f8d7da;
             color: #721c24;
         }
-        
+
         .progress-bar {
             width: 100%;
             height: 20px;
@@ -258,7 +258,7 @@
             overflow: hidden;
             display: none;
         }
-        
+
         .progress {
             height: 100%;
             background-color: var(--secondary-color);
@@ -272,12 +272,12 @@
         <h1>Convertitore da Fountain a EPUB</h1>
         <p>Converti i tuoi file Fountain in EPUB mantenendo la formattazione standard</p>
     </header>
-    
+
     <main>
         <div class="container">
             <section class="input-section">
                 <h2>Inserisci la Sceneggiatura</h2>
-                
+
                 <div class="file-input">
                     <label for="screenplay-file">Carica un file</label>
                     <div class="file-drop" id="file-drop">
@@ -287,7 +287,7 @@
                     </div>
                     <input type="file" id="screenplay-file" accept=".fountain,.txt">
                 </div>
-                
+
                 <div class="options">
                     <div class="option">
                         <input type="checkbox" id="include-page-numbers" checked>
@@ -302,15 +302,15 @@
                         <label for="include-metadata">Includi metadati (titolo, autore, ecc.)</label>
                     </div>
                 </div>
-                
+
                 <button type="button" id="convert-btn">Converti in EPUB</button>
-                
+
                 <div id="status" class="status" style="display: none;"></div>
                 <div id="progress-container" class="progress-bar">
                     <div id="progress" class="progress"></div>
                 </div>
             </section>
-            
+
             <section class="preview-section">
                 <h2>Anteprima</h2>
                 <div class="preview-content screenplay" id="preview">
@@ -329,7 +329,7 @@
                     <p class="dialogue">Sono a casa! C'è qualcuno?</p>
                     <p class="transition">FADE TO:</p>
                 </div>
-                
+
                 <button type="button" id="download-btn">Scarica EPUB</button>
             </section>
         </div>
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusElement = document.getElementById('status');
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress');
-    
+
     // Variabili globali
     let screenplayElements = [];
     let metadataInfo = {
@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
     fileDropArea.addEventListener('drop', function(e) {
         e.preventDefault();
         fileDropArea.classList.remove('active');
-        
+
         if (e.dataTransfer.files.length) {
             fileInput.files = e.dataTransfer.files;
             handleFileSelect(e.dataTransfer.files[0]);
@@ -397,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showStatus('Seleziona prima un file da convertire', 'error');
             return;
         }
-        
+
         const file = fileInput.files[0];
         convertFile(file);
     };
@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showStatus('Non c\'è nulla da scaricare. Converti prima un file.', 'error');
             return;
         }
-        
+
         generateEpub();
     };
 
@@ -415,9 +415,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleFileSelect(file) {
         const fileName = file.name;
         const fileExtension = fileName.split('.').pop().toLowerCase();
-        
+
         showProgress(true, 10);
-        
+
         if (fileExtension === 'fountain' || fileExtension === 'txt') {
             readFountainFile(file);
         } else {
@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function readFountainFile(file) {
         const reader = new FileReader();
-        
+
         reader.onload = function(e) {
             showProgress(true, 50);
             const content = e.target.result;
@@ -439,147 +439,207 @@ document.addEventListener('DOMContentLoaded', function() {
             showProgress(true, 100);
             setTimeout(function() { showProgress(false); }, 500);
         };
-        
+
         reader.onerror = function() {
             showStatus('Errore nella lettura del file', 'error');
             showProgress(false);
         };
-        
+
         reader.readAsText(file);
     }
 
     function parseFountain(content) {
-        const lines = content.split(/\r?\n/);
-        const elements = [];
-        let currentPage = 1;
-        let lineCount = 0; // Contatore per il calcolo delle pagine
-        const MAX_LINES_PER_PAGE = 52; // 52 righe per pagina standard
-        
-        // Verifichiamo se ci sono metadati (title page)
-        let inTitlePage = false;
-        let inMetadataSection = false;
-        let currentMetadataKey = null;
-        let metadataValues = {};
-        
-        // Resettiamo i metadati
-        metadataInfo = {
-            title: "Sceneggiatura senza titolo",
-            author: "Autore anonimo",
-            credit: "",
-            source: "",
-            notes: "",
-            copyright: "",
-            draftDate: new Date().toLocaleDateString('it-IT')
-        };
-        
-        let lineIndex = 0;
-        let titlePageContentFound = false;
-        
-        // Prima passiamo i metadati se presenti
-        if (lines[0] === '---') {
-            inTitlePage = true;
-            lineIndex = 1; // Iniziamo dalla seconda riga
-            
-            while (lineIndex < lines.length && lines[lineIndex] !== '---') {
-                const line = lines[lineIndex].trim();
-                titlePageContentFound = true;
+    const lines = content.split(/\r?\n/);
+    const elements = [];
+    let currentPage = 1;
+    let lineCount = 0; // Contatore per il calcolo delle pagine
+    const MAX_LINES_PER_PAGE = 52; // 52 righe per pagina standard
+
+    // Resettiamo i metadati
+    metadataInfo = {
+        title: "Sceneggiatura senza titolo",
+        author: "Autore anonimo",
+        credit: "",
+        source: "",
+        notes: "",
+        copyright: "",
+        draftDate: new Date().toLocaleDateString('it-IT')
+    };
+
+    let lineIndex = 0;
+    let titlePageContentFound = false;
+    let metadataValues = {};
+    let currentMetadataKey = null;
+    
+    // Verifichiamo se il file inizia con i metadati delimitati da ---
+    let inTitlePage = false;
+    
+    // Caso 1: Il file inizia già con ---
+    if (lines[0] === '---') {
+        inTitlePage = true;
+        lineIndex = 1; // Iniziamo dalla seconda riga
+    } 
+    // Caso 2: Cerchiamo la prima riga che potrebbe essere un metadato (contiene :)
+    else {
+        for (let i = 0; i < Math.min(10, lines.length); i++) { // Controlliamo solo le prime 10 righe
+            if (lines[i].includes(':')) {
+                const parts = lines[i].split(':', 2);
+                const possibleKey = parts[0].trim().toLowerCase();
                 
-                if (line.includes(':')) {
-                    const [key, value] = line.split(':', 2);
-                    currentMetadataKey = key.trim().toLowerCase();
+                // Se sembra un metadato valido (title, author, ecc.)
+                if (['title', 'author', 'credit', 'source', 'notes', 'copyright', 'draft date'].includes(possibleKey)) {
+                    // Inserisci delimitatore --- all'inizio
+                    lines.splice(i, 0, '---');
+                    inTitlePage = true;
+                    lineIndex = i + 1; // Iniziamo dalla riga dopo il delimitatore
+                    break;
+                }
+            }
+        }
+    }
+
+    // Se abbiamo trovato l'inizio dei metadati, processiamoli
+    if (inTitlePage) {
+
+            // Cerchiamo la fine dei metadati (---)
+        let endTitlePageIndex = -1;
+        for (let i = lineIndex; i < lines.length; i++) {
+            if (lines[i] === '---') {
+                endTitlePageIndex = i;
+                break;
+            }
+        }
+        
+        // Se non troviamo il delimitatore di fine, lo aggiungiamo
+        if (endTitlePageIndex === -1) {
+            // Cerchiamo la fine dei metadati (prima riga vuota seguita da riga che sembra sceneggiatura)
+            for (let i = lineIndex; i < lines.length - 1; i++) {
+                if (lines[i].trim() === '' && 
+                    (lines[i+1].match(/^(INT|EXT|I\/E|EST|INT\/EST)\./i) || 
+                     lines[i+1].match(/^[A-Z][A-Z\s]+:$/) ||
+                     lines[i+1].match(/^[A-Z][A-Z\s']+$/) ||
+                     lines[i+1].startsWith('.'))) {
                     
-                    // Inizializziamo l'array per questo tipo di metadato
-                    if (!metadataValues[currentMetadataKey]) {
-                        metadataValues[currentMetadataKey] = [];
-                    }
-                    
-                    // Aggiungiamo il valore se presente sulla stessa riga
-                    const metadataValue = value.trim();
-                    if (metadataValue) {
-                        metadataValues[currentMetadataKey].push(metadataValue);
-                    }
-                } else if (currentMetadataKey && line) {
-                    // Continuazione di un metadato su più righe
-                    // Aggiungiamo ogni riga come elemento separato
-                    metadataValues[currentMetadataKey].push(line);
-                } else if (line === '') {
-                    // Riga vuota, continuiamo con lo stesso metadato ma aggiungiamo un separatore
-                    if (currentMetadataKey) {
-                        metadataValues[currentMetadataKey].push('');
+                    // Inseriamo il delimitatore di fine qui
+                    lines.splice(i, 0, '---');
+                    endTitlePageIndex = i;
+                    break;
+                }
+            }
+            
+            // Se ancora non troviamo un punto logico, mettiamo il delimitatore dopo l'ultimo metadato trovato
+            if (endTitlePageIndex === -1) {
+                let lastMetadataIndex = lineIndex;
+                for (let i = lineIndex; i < Math.min(lineIndex + 30, lines.length); i++) {
+                    if (lines[i].includes(':')) {
+                        lastMetadataIndex = i;
                     }
                 }
                 
-                lineIndex++;
+                // Aggiungiamo il delimitatore dopo l'ultimo metadato
+                lines.splice(lastMetadataIndex + 1, 0, '---');
+                endTitlePageIndex = lastMetadataIndex + 1;
             }
+        }
+        
+        // Ora processiamo i metadati tra i delimitatori
+        titlePageContentFound = true;
+        while (lineIndex < endTitlePageIndex) {
+            const line = lines[lineIndex].trim();
             
-            // Saltiamo la riga di chiusura dei metadati
-            if (lineIndex < lines.length && lines[lineIndex] === '---') {
-                lineIndex++;
+            if (line.includes(':')) {
+                const [key, value] = line.split(':', 2);
+                currentMetadataKey = key.trim().toLowerCase();
+
+                // Inizializziamo l'array per questo tipo di metadato
+                if (!metadataValues[currentMetadataKey]) {
+                    metadataValues[currentMetadataKey] = [];
+                }
+
+                // Aggiungiamo il valore se presente sulla stessa riga
+                const metadataValue = value.trim();
+                if (metadataValue) {
+                    metadataValues[currentMetadataKey].push(metadataValue);
+                }
+            } else if (currentMetadataKey && line) {
+                // Continuazione di un metadato su più righe
+                metadataValues[currentMetadataKey].push(line);
+            } else if (line === '') {
+                // Riga vuota, continuiamo con lo stesso metadato ma aggiungiamo un separatore
+                if (currentMetadataKey) {
+                    metadataValues[currentMetadataKey].push('');
+                }
             }
-            
-            // Processiamo i metadati raccolti
-            if (metadataValues['title'] && metadataValues['title'].length > 0) {
-                metadataInfo.title = metadataValues['title'].join(' ').trim();
-            }
-            
+
+            lineIndex++;
+        }
+        
+        // Saltiamo la riga di chiusura dei metadati
+        lineIndex++;
+        
+        // Processiamo i metadati raccolti
+        if (metadataValues['title'] && metadataValues['title'].length > 0) {
+            metadataInfo.title = metadataValues['title'].join(' ').trim();
+        }
+
             if (metadataValues['author'] && metadataValues['author'].length > 0) {
                 metadataInfo.author = metadataValues['author'].join(' ').trim();
             }
-            
+
             if (metadataValues['credit'] && metadataValues['credit'].length > 0) {
                 metadataInfo.credit = metadataValues['credit'].join(' ').trim();
             }
-            
+
             if (metadataValues['source'] && metadataValues['source'].length > 0) {
                 metadataInfo.source = metadataValues['source'].join(' ').trim();
             }
-            
+
             if (metadataValues['copyright'] && metadataValues['copyright'].length > 0) {
                 metadataInfo.copyright = metadataValues['copyright'].join(' ').trim();
             }
-            
+
             if (metadataValues['notes'] && metadataValues['notes'].length > 0) {
                 // Per le note, manteniamo il formato multilinea
                 metadataInfo.notes = metadataValues['notes'].join('\n').trim();
             }
-            
+
             // Aggiungiamo gli elementi dei metadati
             if (document.getElementById('include-metadata').checked && titlePageContentFound) {
                 elements.push({ type: 'title', content: metadataInfo.title, pageNumber: currentPage });
                 lineCount += 2; // Il titolo occupa circa 2 righe
-                
+
                 if (metadataInfo.credit) {
                     elements.push({ type: 'credit', content: metadataInfo.credit, pageNumber: currentPage });
                     lineCount += 1;
                 }
-                
+
                 if (metadataInfo.author) {
                     elements.push({ type: 'author', content: metadataInfo.author, pageNumber: currentPage });
                     lineCount += 1;
                 }
-                
+
                 if (metadataInfo.source) {
                     elements.push({ type: 'source', content: metadataInfo.source, pageNumber: currentPage });
                     lineCount += 2; // Fonte con spazio
                 }
-                
+
                 if (metadataInfo.notes) {
                     elements.push({ type: 'notes', content: metadataInfo.notes, pageNumber: currentPage });
                     // Le note occupano più righe in base al contenuto
                     lineCount += metadataInfo.notes.split('\n').length + 2;
                 }
-                
+
                 if (metadataInfo.copyright) {
                     elements.push({ type: 'copyright', content: metadataInfo.copyright, pageNumber: currentPage });
                     lineCount += 2; // Copyright con spazio
                 }
             }
         }
-        
+
         // Ora analizziamo il contenuto della sceneggiatura
         for (let i = lineIndex; i < lines.length; i++) {
             const line = lines[i].trim();
-            
+
             // Gestione interruzione di pagina esplicita
             if (line === "===") {
                 currentPage++;
@@ -591,7 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 continue;
             }
-            
+
             // Calcolo automatico delle interruzioni di pagina se l'opzione è attiva
             if (document.getElementById('calculate-pages').checked && lineCount >= MAX_LINES_PER_PAGE) {
                 currentPage++;
@@ -602,13 +662,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     pageNumber: currentPage 
                 });
             }
-            
+
             // Saltiamo le righe vuote ma le contiamo per il calcolo delle pagine
             if (line === '') {
                 lineCount++; // Una riga vuota conta come una riga
                 continue;
             }
-            
+
             // Rilevamento del tipo di elemento basato sulla sintassi Fountain
             if (line.match(/^(INT|EXT|I\/E|EST|INT\/EST)\./i) || line.startsWith('.')) {
                 // Intestazione di scena
@@ -642,7 +702,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // MARIO CONTINUED
                 // MARIO (FILTERED)
                 // e varianti multiple
-                
+
                 // Rimuoviamo il @ se presente
                 const characterName = line.replace(/^@/, '');
                 elements.push({ 
@@ -651,7 +711,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     pageNumber: currentPage 
                 });
                 lineCount += 1; // Un personaggio occupa una riga
-                
+
                 // Controlliamo se la riga successiva è una parentetica
                 if (i + 1 < lines.length && lines[i + 1].trim().match(/^\(.+\)$/)) {
                     i++;
@@ -662,7 +722,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     lineCount += 1; // Una parentetica occupa una riga
                 }
-                
+
                 // Le righe successive fino a una riga vuota sono dialoghi
                 let j = i + 1;
                 while (j < lines.length && lines[j].trim() !== '' && 
@@ -702,26 +762,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 lineCount += Math.ceil(line.length / 60); // Un'azione occupa righe in base alla lunghezza
             }
         }
-        
+
         return elements;
     }
 
     function renderPreview(elements) {
         preview.innerHTML = '';
-        
+
         let lastPageNumber = -1;
-        
+
         elements.forEach(element => {
             const p = document.createElement('p');
             p.className = element.type;
-            
+
             // Gestione speciale per le note che potrebbero essere multilinea
             if (element.type === 'notes' && element.content.includes('\n')) {
                 p.innerHTML = element.content.replace(/\n/g, '<br>');
             } else {
                 p.textContent = element.content;
             }
-            
+
             // Aggiungiamo l'interruzione di pagina se necessario e se l'opzione è attivata
             if (document.getElementById('include-page-numbers').checked &&
                 element.pageNumber > lastPageNumber &&
@@ -733,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 element.type !== 'notes' &&
                 element.type !== 'copyright') {
                 lastPageNumber = element.pageNumber;
-                
+
                 if (lastPageNumber > 0) { // Iniziamo da pagina 1
                     const pageBreak = document.createElement('p');
                     pageBreak.className = 'page-break';
@@ -741,7 +801,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     preview.appendChild(pageBreak);
                 }
             }
-            
+
             preview.appendChild(p);
         });
     }
@@ -750,13 +810,13 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             showProgress(true, 10);
             showStatus('Generazione EPUB in corso...', 'success');
-            
+
             // Creiamo un nuovo oggetto JSZip
             const zip = new JSZip();
-            
+
             // Aggiungiamo il file mimetype (deve essere il primo senza compressione)
             zip.file("mimetype", "application/epub+zip", {compression: "STORE"});
-            
+
             // Creiamo la struttura META-INF
             zip.folder("META-INF").file("container.xml", 
                 `<?xml version="1.0" encoding="UTF-8"?>
@@ -766,10 +826,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     </rootfiles>
                 </container>`
             );
-            
+
             // Creiamo la cartella OEBPS
             const oebps = zip.folder("OEBPS");
-            
+
             // Creiamo il file CSS
             oebps.file("style.css", 
                 `.scene-heading {
@@ -848,7 +908,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     font-style: italic;
                 }`
             );
-            
+
             // Creiamo il file content.opf
             oebps.file("content.opf", 
                 `<?xml version="1.0" encoding="UTF-8"?>
@@ -869,9 +929,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     </spine>
                 </package>`
             );
-            
+
             showProgress(true, 50);
-            
+
             // Creiamo il contenuto HTML
             let screenplayHtml = `<?xml version="1.0" encoding="UTF-8"?>
                 <!DOCTYPE html>
@@ -882,7 +942,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <link rel="stylesheet" type="text/css" href="style.css"/>
                 </head>
                 <body>`;
-            
+
             // Aggiungiamo gli elementi della sceneggiatura
             screenplayElements.forEach(function(element) {
                 if (element.type === 'notes' && element.content.includes('\n')) {
@@ -892,13 +952,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content)}</p>\n`;
                 }
             });
-            
+
             screenplayHtml += `</body></html>`;
-            
+
             oebps.file("screenplay.xhtml", screenplayHtml);
-            
+
             showProgress(true, 80);
-            
+
             // Generiamo il file EPUB
             const content = await zip.generateAsync({
                 type: "blob",
@@ -911,17 +971,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const percentComplete = 80 + Math.floor(metadata.percent * 0.2);
                 showProgress(true, percentComplete);
             });
-            
+
             // Creiamo un nome file basato sul titolo
             const filename = `${metadataInfo.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.epub`;
-            
+
             // Scarichiamo il file
             saveAs(content, filename);
-            
+
             showStatus('EPUB generato con successo!', 'success');
             showProgress(true, 100);
             setTimeout(function() { showProgress(false); }, 500);
-            
+
         } catch (error) {
             console.error('Errore nella generazione dell\'EPUB:', error);
             showStatus('Errore nella generazione dell\'EPUB: ' + error.message, 'error');
@@ -949,13 +1009,13 @@ document.addEventListener('DOMContentLoaded', function() {
         statusElement.textContent = message;
         statusElement.className = `status ${type}`;
         statusElement.style.display = 'block';
-        
+
         // Nascondi il messaggio dopo 5 secondi
         setTimeout(function() {
             statusElement.style.display = 'none';
         }, 5000);
     }
-    
+
     function showProgress(show, percent = 0) {
         if (show) {
             progressContainer.style.display = 'block';
@@ -982,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { type: 'dialogue', content: 'Sono a casa! C\'è qualcuno?', pageNumber: 1 },
         { type: 'transition', content: 'FADE TO:', pageNumber: 1 }
     ];
-    
+
     screenplayElements = exampleContent;
     renderPreview(exampleContent);
 });
