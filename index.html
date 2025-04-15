@@ -606,45 +606,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Aggiungiamo gli elementi dei metadati
-if (document.getElementById('include-metadata').checked && titlePageContentFound) {
-    elements.push({ type: 'title', content: metadataInfo.title, pageNumber: currentPage });
-    lineCount += 2; // Il titolo occupa circa 2 righe
+            if (document.getElementById('include-metadata').checked && titlePageContentFound) {
+                elements.push({ type: 'title', content: metadataInfo.title, pageNumber: currentPage });
+                lineCount += 2; // Il titolo occupa circa 2 righe
 
-    if (metadataInfo.credit) {
-        elements.push({ type: 'credit', content: metadataInfo.credit, pageNumber: currentPage });
-        lineCount += 1;
-    }
+                if (metadataInfo.credit) {
+                    elements.push({ type: 'credit', content: metadataInfo.credit, pageNumber: currentPage });
+                    lineCount += 1;
+                }
 
-    if (metadataInfo.author) {
-        elements.push({ type: 'author', content: metadataInfo.author, pageNumber: currentPage });
-        lineCount += 1;
-    }
+                if (metadataInfo.author) {
+                    elements.push({ type: 'author', content: metadataInfo.author, pageNumber: currentPage });
+                    lineCount += 1;
+                }
 
-    if (metadataInfo.source) {
-        elements.push({ type: 'source', content: metadataInfo.source, pageNumber: currentPage });
-        lineCount += 2; // Fonte con spazio
-    }
+                if (metadataInfo.source) {
+                    elements.push({ type: 'source', content: metadataInfo.source, pageNumber: currentPage });
+                    lineCount += 2; // Fonte con spazio
+                }
 
-    if (metadataInfo.notes) {
-        elements.push({ type: 'notes', content: metadataInfo.notes, pageNumber: currentPage });
-        // Le note occupano più righe in base al contenuto
-        lineCount += metadataInfo.notes.split('\n').length + 2;
-    }
+                if (metadataInfo.notes) {
+                    elements.push({ type: 'notes', content: metadataInfo.notes, pageNumber: currentPage });
+                    // Le note occupano più righe in base al contenuto
+                    lineCount += metadataInfo.notes.split('\n').length + 2;
+                }
 
-    if (metadataInfo.copyright) {
-        elements.push({ type: 'copyright', content: metadataInfo.copyright, pageNumber: currentPage });
-        lineCount += 2; // Copyright con spazio
-    }
-    
-    // Aggiungi automaticamente un'interruzione di pagina dopo i metadati
-    currentPage++;
-    lineCount = 0; // Reset del contatore righe
-    elements.push({ 
-        type: 'page-break', 
-        content: `— Pagina ${currentPage} —`, 
-        pageNumber: currentPage 
-    });
-}
+                if (metadataInfo.copyright) {
+                    elements.push({ type: 'copyright', content: metadataInfo.copyright, pageNumber: currentPage });
+                    lineCount += 2; // Copyright con spazio
+                }
+            }
         }
 
         // Ora analizziamo il contenuto della sceneggiatura
