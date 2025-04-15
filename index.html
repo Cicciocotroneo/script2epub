@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta tag generali per PWA -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Convertitore Fountain">
+<meta name="application-name" content="Convertitore Fountain">
+<meta name="theme-color" content="#2c3e50">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="manifest.json">
     <title>Fountain to EPUB Converter</title>
     <!-- Librerie esterne necessarie -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -433,6 +445,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         generateEpub();
     };
+
+     // Registrazione del service worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(registration => {
+                console.log('Service Worker registrato con successo:', registration);
+            })
+            .catch(error => {
+                console.log('Registrazione Service Worker fallita:', error);
+            });
+    }
 
     // Funzioni di supporto
     function handleFileSelect(file) {
