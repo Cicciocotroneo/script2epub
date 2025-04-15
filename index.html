@@ -324,9 +324,11 @@
                     <p class="page-break">— Pagina 1 —</p>
                     <p class="scene-heading">INT. CASA DI MARIO - GIORNO</p>
                     <p class="action">Mario entra nell'appartamento e si guarda intorno. Posa la giacca su una sedia.</p>
+               <div class="dialogue-group">
                     <p class="character">MARIO (V.O.)</p>
                     <p class="parenthetical">(guardando intorno)</p>
                     <p class="dialogue">Sono a casa! C'è qualcuno?</p>
+                   </div>
                     <p class="transition">FADE TO:</p>
                 </div>
 
@@ -842,21 +844,53 @@ document.addEventListener('DOMContentLoaded', function() {
                     text-align: left;
                     margin-top: 1em;
                 }
-                .character {
-                    text-transform: uppercase;
-                    margin-left: 12em;
-                    margin-top: 1em;
-                    font-weight: bold;
-                }
-                .parenthetical {
-                    margin-left: 10em;
-                    margin-top: 0;
-                }
-                .dialogue {
-                    margin-left: 8em;
-                    margin-right: 8em;
-                    margin-top: 0;
-                }
+    .character {
+        text-transform: uppercase;
+        margin-left: 15em;
+        margin-top: 1em;
+        margin-bottom: 0;
+        font-weight: bold;
+        padding-bottom: 0;
+        line-height: 1;
+    }
+    .parenthetical {
+        margin-left: 12em;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        line-height: 1;
+    }
+    .dialogue {
+        margin-left: 8em;
+        margin-right: 8em;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        line-height: 1;
+    }
+    .dialogue-block {
+        margin-bottom: 1em;
+    }
+    .dialogue-block p {
+        margin: 0;
+        padding: 0;
+    }
+    /* Garantisci che non ci siano spazi tra paragrafi consecutivi in un dialogo */
+    .dialogue-block .character + .parenthetical,
+    .dialogue-block .character + .dialogue,
+    .dialogue-block .parenthetical + .dialogue {
+        margin-top: 0;
+    }
+    
+    /* Forza l'impilamento verticale stretto senza spazi */
+    p {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+    p + p {
+        margin-top: 0;
+    }
                 .transition {
                     text-transform: uppercase;
                     text-align: right;
@@ -944,14 +978,68 @@ document.addEventListener('DOMContentLoaded', function() {
                 <body>`;
 
             // Aggiungiamo gli elementi della sceneggiatura
-            screenplayElements.forEach(function(element) {
-                if (element.type === 'notes' && element.content.includes('\n')) {
-                    // Gestione speciale per le note multilinea
-                    screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content).replace(/\n/g, '<br/>')}</p>\n`;
-                } else {
-                    screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content)}</p>\n`;
-                }
-            });
+let inDialogueBlock = false;
+let dialogueBlockHtml = '';
+
+for (let i = 0; i < screenplayElements.length; i++) {
+    const element = screenplayElements[i];
+    
+    // Controlla se stiamo iniziando un blocco di dialogo (personaggio)
+    if (element.type === 'character') {
+        // Se siamo già in un blocco di dialogo, chiudiamo quello precedente
+        if (inDialogueBlock) {
+            screenplayHtml += `<div class="dialogue-block">${dialogueBlockHtml}</div>\n`;
+            dialogueBlockHtml = '';
+        }
+        
+        // Iniziamo un nuovo blocco di dialogo
+        inDialogueBlock = true;
+        dialogueBlockHtml = `<p class="${element.type}">${escapeHtml(element.content)}</p>\n`;
+        
+        // Controlla se gli elementi successivi sono parentetica e/o dialogo
+        let j = i + 1;
+        while (j < screenplayElements.length && 
+              (screenplayElements[j].type === 'parenthetical' || 
+               screenplayElements[j].type === 'dialogue')) {
+            
+            if (screenplayElements[j].type === 'notes' && 
+                screenplayElements[j].content.includes('\n')) {
+                dialogueBlockHtml += `<p class="${screenplayElements[j].type}">${
+                    escapeHtml(screenplayElements[j].content).replace(/\n/g, '<br/>')
+                }</p>\n`;
+            } else {
+                dialogueBlockHtml += `<p class="${screenplayElements[j].type}">${
+                    escapeHtml(screenplayElements[j].content)
+                }</p>\n`;
+            }
+            
+            j++;
+        }
+        
+        // Saltiamo gli elementi che abbiamo già processato
+        i = j - 1;
+        
+        // Chiudiamo il blocco di dialogo
+        screenplayHtml += `<div class="dialogue-block">${dialogueBlockHtml}</div>\n`;
+        inDialogueBlock = false;
+        dialogueBlockHtml = '';
+    } 
+    // Se non è un personaggio, lo trattiamo normalmente
+    else if (element.type !== 'parenthetical' && element.type !== 'dialogue') {
+        if (element.type === 'notes' && element.content.includes('\n')) {
+            screenplayHtml += `<p class="${element.type}">${
+                escapeHtml(element.content).replace(/\n/g, '<br/>')
+            }</p>\n`;
+        } else {
+            screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content)}</p>\n`;
+        }
+    }
+}
+
+// In caso ci sia un blocco di dialogo non chiuso alla fine
+if (inDialogueBlock) {
+    screenplayHtml += `<div class="dialogue-block">${dialogueBlockHtml}</div>\n`;
+}
 
             screenplayHtml += `</body></html>`;
 
