@@ -143,7 +143,18 @@
             font-size: 12pt;
             line-height: 1;
         }
+/* Aggiungere al CSS della pagina */
+.screenplay em {
+    font-style: italic;
+}
 
+.screenplay strong {
+    font-weight: bold;
+}
+
+.screenplay u {
+    text-decoration: underline;
+}
         .screenplay .scene-heading {
             text-transform: uppercase;
             font-weight: bold;
@@ -769,20 +780,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderPreview(elements) {
-        preview.innerHTML = '';
+function renderPreview(elements) {
+    preview.innerHTML = '';
 
-        let lastPageNumber = -1;
+    let lastPageNumber = -1;
 
-        elements.forEach(element => {
-            const p = document.createElement('p');
-            p.className = element.type;
+    elements.forEach(element => {
+        const p = document.createElement('p');
+        p.className = element.type;
 
-            // Gestione speciale per le note che potrebbero essere multilinea
-            if (element.type === 'notes' && element.content.includes('\n')) {
-                p.innerHTML = element.content.replace(/\n/g, '<br>');
-            } else {
-                p.textContent = element.content;
-            }
+           // Gestione speciale per le note che potrebbero essere multilinea
+        if (element.type === 'notes' && element.content.includes('\n')) {
+            p.innerHTML = formatRichText(element.content.replace(/\n/g, '<br>')); // Usa formatRichText
+        } else {
+            p.innerHTML = formatRichText(element.content); // Usa formatRichText invece di textContent
+        }
 
             // Aggiungiamo l'interruzione di pagina se necessario e se l'opzione è attivata
             if (document.getElementById('include-page-numbers').checked &&
@@ -901,7 +913,18 @@ document.addEventListener('DOMContentLoaded', function() {
     .dialogue-block .parenthetical + .dialogue {
         margin-top: 0;
     }
+    /* Stili per il testo arricchito */
+    em {
+        font-style: italic;
+    }
     
+    strong {
+        font-weight: bold;
+    }
+    
+    u {
+        text-decoration: underline;
+    }
     /* Forza l'impilamento verticale stretto senza spazi */
     p {
         margin-top: 0;
@@ -997,14 +1020,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 <body>`;
 
             // Aggiungiamo gli elementi della sceneggiatura
-            screenplayElements.forEach(function(element) {
-                if (element.type === 'notes' && element.content.includes('\n')) {
-                    // Gestione speciale per le note multilinea
-                    screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content).replace(/\n/g, '<br/>')}</p>\n`;
-                } else {
-                    screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content)}</p>\n`;
-                }
-            });
+screenplayElements.forEach(function(element) {
+    if (element.type === 'notes' && element.content.includes('\n')) {
+        // Gestione speciale per le note multilinea
+        screenplayHtml += `<p class="${element.type}">${formatRichText(element.content.replace(/\n/g, '<br/>'))}</p>\n`;
+    } else {
+        screenplayHtml += `<p class="${element.type}">${formatRichText(element.content)}</p>\n`;
+    }
+});
 
             screenplayHtml += `</body></html>`;
 
@@ -1041,7 +1064,36 @@ document.addEventListener('DOMContentLoaded', function() {
             showProgress(false);
         }
     }
-
+function formatRichText(text) {
+    // Prima eseguiamo l'escape dei caratteri HTML speciali
+    let formattedText = escapeHtml(text);
+    
+    // Sostituisci le combinazioni in un ordine specifico:
+    // Prima le combinazioni più specifiche, poi quelle più generiche
+    
+    // 1. Bold + Italic (***testo***)
+    formattedText = formattedText.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    
+    // 2. Underline + Italic (_*testo*_)
+    formattedText = formattedText.replace(/\_\*(.*?)\*\_/g, '<u><em>$1</em></u>');
+    
+    // 3. Bold (_**testo**_)
+    formattedText = formattedText.replace(/\_\*\*(.*?)\*\*\_/g, '<u><strong>$1</strong></u>');
+    
+    // 4. Bold + Italic + Underline (_***testo***_)
+    formattedText = formattedText.replace(/\_\*\*\*(.*?)\*\*\*\_/g, '<u><strong><em>$1</em></strong></u>');
+    
+    // 5. Bold (**testo**)
+    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // 6. Italic (*testo*)
+    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // 7. Underline (_testo_)
+    formattedText = formattedText.replace(/\_(.*?)\_/g, '<u>$1</u>');
+    
+    return formattedText;
+}
     function escapeHtml(text) {
         const map = {
             '&': '&amp;',
