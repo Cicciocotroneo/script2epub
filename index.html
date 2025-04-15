@@ -271,21 +271,19 @@
     <header>
         <h1>Fountain to EPUB Converter</h1>
         <p>Convert your Fountain files to EPUB keeping a standard-like format.</p>
-<p><strong>Please note:</strong>This page is intended for study purposes only. Fountain is a Fountain is a simple markup syntax for writing, editing, and sharing screenplays in plain, human-readable text, developed by John August, Nima Yousefi, Stu Maschwitz, with contributions from other developers. You can find more information at<a href="https://fountain.io" target="_blank">Fountain.io</a>.
-The author of the site is available to remove the page at the request of the rights holders, or to change the attributions, upon request. Contact me <a href="https://bsky.app/profile/antonioderosa.bsky.social" target="_blank">here</a>.</p>
     </header>
 
     <main>
         <div class="container">
             <section class="input-section">
-                <h2>Inserisci la Sceneggiatura</h2>
+                <h2>Insert your script</h2>
 
                 <div class="file-input">
-                    <label for="screenplay-file">Carica un file</label>
+                    <label for="screenplay-file">Upload a file</label>
                     <div class="file-drop" id="file-drop">
-                        <p>Trascina qui il tuo file Fountain (.fountain o .txt)</p>
-                        <p>oppure</p>
-                        <button type="button" id="file-select-btn">Seleziona un file</button>
+                        <p>Drop your Fountain file here (.fountain o .txt)</p>
+                        <p>or</p>
+                        <button type="button" id="file-select-btn">Select a file</button>
                     </div>
                     <input type="file" id="screenplay-file" accept=".fountain,.txt">
                 </div>
@@ -293,19 +291,19 @@ The author of the site is available to remove the page at the request of the rig
                 <div class="options">
                     <div class="option">
                         <input type="checkbox" id="include-page-numbers" checked>
-                        <label for="include-page-numbers">Includi numeri di pagina</label>
+                        <label for="include-page-numbers">Include page numbers</label>
                     </div>
                     <div class="option">
                         <input type="checkbox" id="calculate-pages" checked>
-                        <label for="calculate-pages">Calcola numeri di pagina (max 52 righe per pagina)</label>
+                        <label for="calculate-pages">Calculate page numbers (will be indicated as app.min. - approximate minutes)</label>
                     </div>
                     <div class="option">
                         <input type="checkbox" id="include-metadata" checked>
-                        <label for="include-metadata">Includi metadati (titolo, autore, ecc.)</label>
+                        <label for="include-metadata">Include metadata (title, authore, ecc.)</label>
                     </div>
                 </div>
 
-                <button type="button" id="convert-btn">Converti in EPUB</button>
+                <button type="button" id="convert-btn">Convert to EPUB</button>
 
                 <div id="status" class="status" style="display: none;"></div>
                 <div id="progress-container" class="progress-bar">
@@ -314,7 +312,7 @@ The author of the site is available to remove the page at the request of the rig
             </section>
 
             <section class="preview-section">
-                <h2>Anteprima</h2>
+                <h2>Preview</h2>
                 <div class="preview-content screenplay" id="preview">
                     <p class="title">LA PRIMINA</p>
                     <p class="credit">written by</p>
@@ -332,9 +330,11 @@ The author of the site is available to remove the page at the request of the rig
                     <p class="transition">FADE TO:</p>
                 </div>
 
-                <button type="button" id="download-btn">Scarica EPUB</button>
+                <button type="button" id="download-btn">Download EPUB</button>
             </section>
         </div>
+        <p><strong>Please note:</strong>This page is intended for study purposes only. Fountain is a Fountain is a simple markup syntax for writing, editing, and sharing screenplays in plain, human-readable text, developed by John August, Nima Yousefi, Stu Maschwitz, with contributions from other developers. You can find more information at<a href="https://fountain.io" target="_blank">Fountain.io</a>.
+The author of the site is available to remove the page at the request of the rights holders, or to change the attributions, upon request. Contact me <a href="https://bsky.app/profile/antonioderosa.bsky.social" target="_blank">here</a>.</p>
     </main>
 
 <script>
@@ -353,8 +353,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variabili globali
     let screenplayElements = [];
     let metadataInfo = {
-        title: "Sceneggiatura senza titolo",
-        author: "Autore anonimo",
+        title: "",
+        author: "",
         credit: "",
         source: "",
         notes: "",
@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Gestione della conversione
     convertBtn.onclick = function() {
         if (!fileInput.files.length) {
-            showStatus('Seleziona prima un file da convertire', 'error');
+            showStatus('First select a file to download', 'error');
             return;
         }
 
@@ -406,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     downloadBtn.onclick = function() {
         if (!screenplayElements.length) {
-            showStatus('Non c\'è nulla da scaricare. Converti prima un file.', 'error');
+            showStatus('Nothing to download, convert a file', 'error');
             return;
         }
 
@@ -423,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fileExtension === 'fountain' || fileExtension === 'txt') {
             readFountainFile(file);
         } else {
-            showStatus('Formato file non supportato. Usa .fountain o .txt', 'error');
+            showStatus('Unsupported file format. Please use .fountain o .txt', 'error');
             showProgress(false);
         }
     }
@@ -437,13 +437,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const parsedContent = parseFountain(content);
             screenplayElements = parsedContent;
             renderPreview(parsedContent);
-            showStatus('File Fountain caricato con successo', 'success');
+            showStatus('File Fountain uploaded', 'success');
             showProgress(true, 100);
             setTimeout(function() { showProgress(false); }, 500);
         };
 
         reader.onerror = function() {
-            showStatus('Errore nella lettura del file', 'error');
+            showStatus('Error in reading the file', 'error');
             showProgress(false);
         };
 
@@ -459,8 +459,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Resettiamo i metadati
     metadataInfo = {
-        title: "Sceneggiatura senza titolo",
-        author: "Autore anonimo",
+        title: "",
+        author: "",
         credit: "",
         source: "",
         notes: "",
