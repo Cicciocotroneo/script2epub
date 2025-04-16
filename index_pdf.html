@@ -779,26 +779,16 @@ if (centeredPos < 150 && text.toUpperCase() === text) {
             // Check for character (centered, all caps, sometimes with extensions)
 // This is more tolerant of centering to handle odd/even page formatting
 if (centeredPos < 150 && text.toUpperCase() === text) {
-    // Base character name pattern - deve iniziare con un nome in maiuscolo
-    const baseCharacterPattern = /^[A-Z][A-Z\s']+/;
-    
-    // Verifica se è un nome di personaggio base
-    if (baseCharacterPattern.test(text)) {
-        // È un personaggio se:
-        // 1. È solo il nome del personaggio
-        // 2. Ha estensioni tra parentesi come (V.O.), (O.S.), ecc., in qualsiasi formato
-        
-        // Controlla se ci sono parentesi di qualsiasi tipo
-        const hasParentheses = /(\([^)]*\))+/.test(text);
-        
-        // Se non ci sono parentesi, è comunque un personaggio
-        if (!hasParentheses) {
-            return 'character';
-        }
-        
-        // Se ci sono parentesi, è quasi certamente un personaggio con estensioni
-        // Non controlliamo più il contenuto specifico delle parentesi poiché
-        // potrebbe essere in qualsiasi formato (maiuscolo, minuscolo, abbreviato, ecc.)
+    // Pattern migliorato: nome in maiuscolo seguito da spazi/apostrofo, poi parentesi multiple
+    const characterPattern = /^([A-Z][A-Z\s']+)(\s*\([^)]+\)\s*)+$/;
+    const baseCharacterPattern = /^[A-Z][A-Z\s']+$/;
+
+    // Caso 1: Nome pulito senza parentesi (es. "JOHN")
+    if (baseCharacterPattern.test(text.trim())) {
+        return 'character';
+    }
+    // Caso 2: Nome con parentesi singole o multiple (es. "JOHN (V.O.)(CONT'D)")
+    else if (characterPattern.test(text.trim())) {
         return 'character';
     }
 }
