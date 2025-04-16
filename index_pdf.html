@@ -1,0 +1,1226 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to EPUB Screenplay Converter</title>
+    
+    <!-- Load libraries directly in head to ensure they're available -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--light-color);
+            color: var(--primary-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+            }
+        }
+
+        .input-section, .preview-section {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            margin-bottom: 1rem;
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .file-input {
+            margin-bottom: 1.5rem;
+        }
+
+        .file-drop {
+            border: 2px dashed var(--secondary-color);
+            border-radius: 4px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .file-drop:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .options {
+            margin-bottom: 1.5rem;
+        }
+
+        .option {
+            margin-bottom: 0.5rem;
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-color);
+        }
+
+        .preview-wrapper {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .preview-content {
+            padding: 1rem;
+            white-space: pre-wrap;
+            min-height: 100%;
+            outline: none;
+        }
+
+        .screenplay .scene-heading {
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-top: 1.5em;
+        }
+
+        .screenplay .action {
+            margin-top: 1em;
+        }
+
+        .screenplay .character {
+            text-transform: uppercase;
+            margin-left: 10em;
+            margin-top: 1em;
+            font-weight: bold;
+        }
+
+        .screenplay .parenthetical {
+            margin-left: 9em;
+            margin-top: 0;
+        }
+
+        .screenplay .dialogue {
+            margin-left: 8em;
+            margin-right: 8em;
+            margin-top: 0;
+        }
+
+        .screenplay .transition {
+            text-transform: uppercase;
+            text-align: right;
+            margin-top: 1em;
+        }
+
+        .screenplay .page-break {
+            border-top: 1px dashed #aaa;
+            margin: 1.5em 0;
+            padding-top: 0.5em;
+            font-size: 0.8em;
+            color: #888;
+            text-align: right;
+        }
+
+        .screenplay .title, .screenplay .credit, .screenplay .author, 
+        .screenplay .source, .screenplay .copyright {
+            text-align: center;
+            margin-bottom: 0.5em;
+        }
+
+        .screenplay .title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 3em;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f1f1f1;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--secondary-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        #debug-log {
+            display: none; /* Hide debug log by default */
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        [contenteditable] {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PDF to EPUB Screenplay Converter</h1>
+        <p>Convert your PDF screenplay files to EPUB</p>
+      
+    </header>
+
+    <main>
+        <div class="container">
+            <section class="input-section">
+                <h2>Select Your PDF</h2>
+              <p>Click <a href="index.html">here</a> if yu need to convert from .fountain</p>
+
+                <div class="file-input">
+                    <div class="file-drop" id="file-drop">
+                        <p>Drop your PDF file here</p>
+                        <p>or</p>
+                        <input type="file" id="screenplay-file" accept=".pdf">
+                        <button id="file-select-btn">Select a file</button>
+                    </div>
+                </div>
+
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="include-page-numbers" checked>
+                        <label for="include-page-numbers">Include page numbers</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="include-metadata" checked>
+                        <label for="include-metadata">Include metadata</label>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">
+                    <button id="convert-btn">Convert to EPUB</button>
+                    <button id="download-btn">Download EPUB</button>
+                </div>
+
+                <div id="status" class="status" style="display: none;"></div>
+                <div id="progress-container" class="progress-bar">
+                    <div id="progress" class="progress"></div>
+                </div>
+            </section>
+
+            <section class="preview-section">
+                <h2>Preview (Editable)</h2>
+                <div class="preview-wrapper">
+                    <div class="preview-content screenplay" id="preview" contenteditable="true">
+                        <p class="title">LA PRIMINA</p>
+                        <p class="credit">written by</p>
+                        <p class="author">Antonio De Rosa</p>
+                        <p class="source">based on the short novel by Antonio De Rosa</p>
+                        <p class="copyright">(c) 2025 ADR</p>
+                        <p class="action">This is a story from Southern Italy...</p>
+                        <p class="page-break">— min(appr) 1 —</p>
+                        <p class="scene-heading">INT. CASA DI MARIO - GIORNO</p>
+                        <p class="action">Mario entra nell'appartamento e si guarda intorno.</p>
+                        <p class="character">MARIO (V.O.)</p>
+                        <p class="parenthetical">(guardando intorno)</p>
+                        <p class="dialogue">Sono a casa! C'è qualcuno?</p>
+                        <p class="transition">FADE TO:</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <div id="debug-log">Debug information will appear here...</div>
+    </main>
+
+<script>
+// Debug function (hidden but still functional for troubleshooting)
+function debug(message) {
+    const debugLog = document.getElementById('debug-log');
+    const timestamp = new Date().toLocaleTimeString();
+    debugLog.innerHTML += `[${timestamp}] ${message}\n`;
+    debugLog.scrollTop = debugLog.scrollHeight;
+    console.log(`[${timestamp}] ${message}`);
+}
+
+// Initialize PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    debug("DOM fully loaded, initializing application");
+    
+    try {
+        // DOM Elements
+        const fileDropArea = document.getElementById('file-drop');
+        const fileInput = document.getElementById('screenplay-file');
+        const fileSelectBtn = document.getElementById('file-select-btn');
+        const convertBtn = document.getElementById('convert-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const preview = document.getElementById('preview');
+        const statusElement = document.getElementById('status');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress');
+
+        // Global variables
+        let screenplayElements = [];
+        let metadataInfo = {
+            title: "",
+            author: "",
+            credit: "",
+            source: "",
+            notes: "",
+            copyright: "",
+            draftDate: new Date().toLocaleDateString('it-IT')
+        };
+        let pdfDocument = null;
+        let pdfPageCount = 0;
+
+        // Set up event handlers
+        fileDropArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            fileDropArea.style.backgroundColor = "rgba(52, 152, 219, 0.1)";
+        });
+
+        fileDropArea.addEventListener('dragleave', function() {
+            fileDropArea.style.backgroundColor = "";
+        });
+
+        fileDropArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            fileDropArea.style.backgroundColor = "";
+            debug("File dropped");
+
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Set up button click handlers
+        fileSelectBtn.addEventListener('click', function() {
+            debug("File select button clicked");
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function() {
+            debug(`File input changed, files: ${fileInput.files.length}`);
+            if (fileInput.files.length) {
+                handleFileSelect(fileInput.files[0]);
+            }
+        });
+
+        convertBtn.addEventListener('click', function() {
+            debug("Convert button clicked");
+            if (!fileInput.files.length) {
+                showStatus('Please select a file first', 'error');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            convertFile(file);
+        });
+
+        downloadBtn.addEventListener('click', function() {
+            debug("Download button clicked");
+            
+            // Extract current content from editable preview
+            extractFromEditablePreview();
+            
+            if (!screenplayElements.length) {
+                showStatus('Nothing to download, convert a file first', 'error');
+                return;
+            }
+
+            generateEpub();
+        });
+
+        // Helper Functions
+        function handleFileSelect(file) {
+            debug(`Handling file: ${file.name} (${file.type})`);
+            const fileName = file.name;
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+
+            showProgress(true, 10);
+
+            if (fileExtension === 'pdf') {
+                readPdfFile(file);
+            } else {
+                showStatus('Unsupported file format. Please use .pdf', 'error');
+                showProgress(false);
+            }
+        }
+
+        function readPdfFile(file) {
+            debug("Reading PDF file");
+            const fileReader = new FileReader();
+
+            fileReader.onload = function(e) {
+                debug("FileReader loaded file");
+                const typedArray = new Uint8Array(e.target.result);
+                
+                // Load PDF document using PDF.js
+                debug("Attempting to load PDF with PDF.js");
+                pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+                    debug(`PDF loaded successfully. Pages: ${pdf.numPages}`);
+                    pdfDocument = pdf;
+                    pdfPageCount = pdf.numPages;
+                    showStatus(`PDF loaded. Pages: ${pdf.numPages}`, 'success');
+                    showProgress(true, 30);
+                    
+                    // Process PDF pages
+                    processPdfPages(pdf);
+                }).catch(function(error) {
+                    debug(`Error loading PDF: ${error.message}`);
+                    console.error('Error loading PDF:', error);
+                    showStatus('Error loading PDF: ' + error.message, 'error');
+                    showProgress(false);
+                });
+            };
+
+            fileReader.onerror = function(error) {
+                debug(`FileReader error: ${error}`);
+                showStatus('Error reading the file', 'error');
+                showProgress(false);
+            };
+
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        function processPdfPages(pdf) {
+            debug("Processing PDF pages");
+            const numPages = pdf.numPages;
+            let pagePromises = [];
+            screenplayElements = [];
+            
+            // Reset metadata
+            metadataInfo = {
+                title: "",
+                author: "",
+                credit: "",
+                source: "",
+                notes: "",
+                copyright: "",
+                draftDate: new Date().toLocaleDateString('it-IT')
+            };
+            
+            // First, process just the first page to see if it's a credits page
+            parsePdfPage(pdf, 1, numPages).then(firstPageElements => {
+                debug(`First page processed, found ${firstPageElements.length} elements`);
+                
+                // Calculate if this is a credit page based on number of elements
+                // Typically a credit page has fewer than half the elements of a regular page
+                const isFirstPageCredits = firstPageElements.length < 10; // Adjust threshold as needed
+                debug(`First page is ${isFirstPageCredits ? 'likely' : 'not likely'} a credits page`);
+                
+                // If it's a credits page, process it as such
+                if (isFirstPageCredits && document.getElementById('include-metadata').checked) {
+                    extractMetadataFromFirstPage(firstPageElements);
+                }
+                
+                // Create an array of page parsing promises for all pages
+                for (let i = 1; i <= numPages; i++) {
+                    // Skip first page if we already processed it
+                    if (i === 1) {
+                        pagePromises.push(Promise.resolve(firstPageElements));
+                    } else {
+                        pagePromises.push(parsePdfPage(pdf, i, numPages));
+                    }
+                }
+                
+                // Process all pages
+                Promise.all(pagePromises)
+                    .then(function(pagesElements) {
+                        debug("All pages processed successfully");
+                        
+                        // Flatten the array of page elements
+                        let allElements = [];
+                        
+                        // Skip first page elements if it was a credits page
+                        for (let i = 0; i < pagesElements.length; i++) {
+                            // Only include content from first page if NOT a credits page or if include-metadata is checked
+                            if (i === 0 && isFirstPageCredits && document.getElementById('include-metadata').checked) {
+                                // Skip the content, we'll add proper metadata later
+                                continue;
+                            } else {
+                                allElements = allElements.concat(pagesElements[i]);
+                            }
+                        }
+                        
+                        // Merge action blocks (fix for unwanted line breaks)
+                        screenplayElements = mergeActionBlocks(allElements);
+                        
+                        debug(`Total screenplay elements after processing: ${screenplayElements.length}`);
+                        
+                        // Add metadata elements at the beginning if we found any
+                        if (isFirstPageCredits && document.getElementById('include-metadata').checked) {
+                            let metadataToAdd = [];
+                            if (metadataInfo.title) {
+                                metadataToAdd.push({ type: 'title', content: metadataInfo.title, pageNumber: 1 });
+                            }
+                            if (metadataInfo.credit) {
+                                metadataToAdd.push({ type: 'credit', content: metadataInfo.credit, pageNumber: 1 });
+                            }
+                            if (metadataInfo.author) {
+                                metadataToAdd.push({ type: 'author', content: metadataInfo.author, pageNumber: 1 });
+                            }
+                            if (metadataInfo.source) {
+                                metadataToAdd.push({ type: 'source', content: metadataInfo.source, pageNumber: 1 });
+                            }
+                            if (metadataInfo.notes) {
+                                metadataToAdd.push({ type: 'notes', content: metadataInfo.notes, pageNumber: 1 });
+                            }
+                            if (metadataInfo.copyright) {
+                                metadataToAdd.push({ type: 'copyright', content: metadataInfo.copyright, pageNumber: 1 });
+                            }
+                            
+                            // Add metadata elements at the beginning
+                            screenplayElements = [...metadataToAdd, ...screenplayElements];
+                        }
+                        
+                        // Render the preview
+                        renderPreview(screenplayElements);
+                        
+                        showStatus('PDF processed successfully', 'success');
+                        showProgress(true, 100);
+                        setTimeout(function() { showProgress(false); }, 500);
+                    })
+                    .catch(function(error) {
+                        debug(`Error processing pages: ${error.message}`);
+                        console.error('Error processing PDF:', error);
+                        showStatus('Error processing PDF: ' + error.message, 'error');
+                        showProgress(false);
+                    });
+            });
+        }
+
+        // Function to merge consecutive action blocks
+        function mergeActionBlocks(elements) {
+            debug("Merging consecutive action blocks");
+            const mergedElements = [];
+            let currentAction = null;
+            let id = 0;  // Unique ID for each element
+            
+            for (let i = 0; i < elements.length; i++) {
+                const element = elements[i];
+                element.id = id++;  // Add unique ID
+                
+                // If this is an action and the previous element was also an action with the same page number
+                if (element.type === 'action' && currentAction && element.pageNumber === currentAction.pageNumber) {
+                    currentAction.content += ' ' + element.content;
+                } 
+                // Otherwise add the element as a new element
+                else {
+                    if (currentAction) {
+                        mergedElements.push(currentAction);
+                        currentAction = null;
+                    }
+                    
+                    if (element.type === 'action') {
+                        currentAction = {...element};
+                    } else {
+                        mergedElements.push(element);
+                    }
+                }
+            }
+            
+            // Add the last action block if there is one
+            if (currentAction) {
+                mergedElements.push(currentAction);
+            }
+            
+            debug(`Merged action blocks: ${elements.length} elements -> ${mergedElements.length} elements`);
+            return mergedElements;
+        }
+
+        function parsePdfPage(pdf, pageNum, totalPages) {
+            debug(`Parsing page ${pageNum} of ${totalPages}`);
+            return pdf.getPage(pageNum).then(function(page) {
+                debug(`Page ${pageNum} loaded`);
+                return page.getTextContent().then(function(textContent) {
+                    debug(`Text content extracted from page ${pageNum}`);
+                    showProgress(true, 30 + Math.floor((pageNum / totalPages) * 50));
+                    
+                    const pageElements = [];
+                    const textItems = textContent.items;
+                    debug(`Page ${pageNum} has ${textItems.length} text items`);
+                    
+                    // Get page dimensions
+                    const pageWidth = page.view[2] - page.view[0];
+                    const pageHeight = page.view[3] - page.view[1];
+                    
+                    // Create a copy of text items for processing (we'll remove page numbers)
+                    let processedItems = [...textItems];
+                    
+                    // First pass: aggressively remove all page numbers
+                    // New more aggressive approach to remove all potential page numbers
+                    processedItems = processedItems.filter(item => {
+                        // Check if the item is near the top of the page
+                        const isInTopArea = item.transform[5] > pageHeight - 100;
+                        
+                        // Check if it's a numeric or numeric-like string
+                        const text = item.str.trim();
+                        
+                        // More aggressive matching for page numbers:
+                        // - Plain numbers
+                        // - Numbers followed by period
+                        // - Roman numerals (i, ii, iii, iv, etc.)
+                        const isPageNumber = 
+                            // Regular numbers or numbers with period
+                            /^(\d+\.?|\d+)$/.test(text) ||
+                            // Roman numerals
+                            /^[ivxlcdmIVXLCDM]+\.?$/.test(text) ||
+                            // Single numbers with surrounding characters like parentheses
+                            /^[\(\[\{]?\d+[\)\]\}]?$/.test(text);
+                        
+                        // If it's in the top area and looks like a page number, remove it
+                        if (isInTopArea && isPageNumber) {
+                            debug(`Removed potential page number: "${text}" at y-position ${item.transform[5]}`);
+                            return false;
+                        }
+                        return true;
+                    });
+                    
+                    // Group remaining items by their vertical position (y-coordinate)
+                    const lineGroups = {};
+                    
+                    for (const item of processedItems) {
+                        // Group by y-position with some tolerance for slight variations
+                        const yPos = Math.round(item.transform[5]);
+                        const yKey = Math.floor(yPos / 3) * 3; // Group within 3 units
+                        
+                        if (!lineGroups[yKey]) {
+                            lineGroups[yKey] = [];
+                        }
+                        
+                        lineGroups[yKey].push(item);
+                    }
+                    
+                    // Sort the y-positions from top to bottom
+                    const sortedYKeys = Object.keys(lineGroups).sort((a, b) => b - a);
+                    
+                    // Determine if this page is even or odd for margin handling
+                    const isEvenPage = (pageNum % 2 === 0);
+                    
+                    // Process each line group
+                    for (const yKey of sortedYKeys) {
+                        const lineItems = lineGroups[yKey];
+                        
+                        // Sort items in this line from left to right
+                        lineItems.sort((a, b) => a.transform[4] - b.transform[4]);
+                        
+                        // Combine items into a single line of text
+                        let lineText = lineItems.map(item => item.str).join(' ').trim();
+                        
+                        if (!lineText) continue; // Skip empty lines
+                        
+                        // Get position information for the first and last item in line
+                        const xPos = lineItems[0].transform[4];
+                        
+                        // Adjust centerPos calculation based on even/odd page
+                        // This handles the case where margins are mirrored on even/odd pages
+                        const centerOffset = isEvenPage ? pageWidth * 0.05 : -pageWidth * 0.05; // 5% offset
+                        const adjustedCenter = pageWidth / 2 + centerOffset;
+                        const centeredPos = Math.abs(xPos - adjustedCenter);
+                        const rightPos = pageWidth - (xPos + lineItems[lineItems.length - 1].width);
+                        
+                        // Detect line type
+                        const elementType = detectElementType(lineText, xPos, centeredPos, rightPos, pageWidth);
+                        pageElements.push({
+                            type: elementType,
+                            content: lineText,
+                            pageNumber: pageNum
+                        });
+                    }
+                    
+                    // Add page break at the end if not the last page
+                    if (pageNum < totalPages && document.getElementById('include-page-numbers').checked) {
+                        pageElements.push({
+                            type: 'page-break',
+                            content: `— min(appr) ${pageNum} —`,
+                            pageNumber: pageNum
+                        });
+                    }
+                    
+                    debug(`Page ${pageNum} processed, found ${pageElements.length} elements`);
+                    return pageElements;
+                });
+            });
+        }
+
+        function detectElementType(text, xPos, centeredPos, rightPos, pageWidth) {
+            // Enhanced scene heading detection that handles scene numbers
+            // Pattern matches scene numbers like: 1, 2, A1, A2, B3, B.3, etc.
+            const sceneNumberPattern = /^(\d+[A-Z]?\.?|[A-Z]\d+\.?|[A-Z]\.\d+\.?)/;
+            
+            // Check for scene heading - now handles scene numbers before the INT/EXT
+            if ((text.match(/^(INT\.?|EXT\.?|I\/E\.?|EST\.?|INT\/EST\.?|INTERNO\.?|ESTERNO\.?)/i) || 
+                 text.match(new RegExp(`${sceneNumberPattern.source}\\s+(INT|EXT|I\\/E|EST|INT\\/EST|INTERNO|ESTERNO)`, 'i'))) && 
+                text.toUpperCase() === text) {
+                return 'scene-heading';
+            }
+            
+            // Check for transition (right aligned, often ends with :)
+            if ((rightPos < 100 && text.includes(':')) || 
+                (text.match(/^(FADE|CUT|DISSOLVE|SMASH|WIPE)/i) && text.includes(':'))) {
+                return 'transition';
+            }
+            
+            // Check for character (centered, all caps, sometimes with extensions)
+            // This is more tolerant of centering to handle odd/even page formatting
+            if (centeredPos < 150 && text.toUpperCase() === text && 
+                (text.match(/^[A-Z][A-Z\s']+(\s*\([A-Za-z\s\.,']+\))*$/) ||
+                 text.match(/^[A-Z][A-Z\s']+((\s*\([A-Za-z\s\.,']+\))+|(\s*(CONT('D)?|CONTINUED|V\.O\.|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?))*)$/i))) {
+                return 'character';
+            }
+            
+            // Check for parenthetical (starts and ends with parentheses)
+            // More flexible on position to handle odd/even pages
+            if (text.match(/^\(.+\)$/) && centeredPos < 200) {
+                return 'parenthetical';
+            }
+            
+            // Check for dialogue (indented from both sides)
+            // Also more flexible for odd/even pages
+            if (xPos > 120 && rightPos > 120 && centeredPos < 200) {
+                return 'dialogue';
+            }
+            
+            // Default to action (left aligned text)
+            return 'action';
+        }
+
+        function extractMetadataFromFirstPage(elements) {
+            debug("Extracting metadata from first page");
+            // Check if we have enough elements
+            if (!elements.length) return;
+            
+            // Check if first page elements are few enough to be considered a credits page
+            let i = 0;
+            
+            // Process the first few elements as potential metadata
+            while (i < elements.length && i < 20) {  // Process up to 20 elements
+                const element = elements[i];
+                
+                // Try to categorize elements based on their content
+                const content = element.content.trim();
+                
+                // Title is usually at the top, centered, larger text
+                if (!metadataInfo.title && (element.type === 'scene-heading' || 
+                   content.toUpperCase() === content)) {
+                    metadataInfo.title = content;
+                    element.type = 'title';
+                    debug(`Found title: "${content}"`);
+                }
+                // "written by" or similar is usually the credit
+                else if (!metadataInfo.credit && (
+                    content.toLowerCase().includes('written by') || 
+                    content.toLowerCase().includes('screenplay by') ||
+                    content.toLowerCase().includes('by'))) {
+                    metadataInfo.credit = content;
+                    element.type = 'credit';
+                    debug(`Found credit: "${content}"`);
+                }
+                // Author usually follows the credit
+                else if (metadataInfo.credit && !metadataInfo.author) {
+                    metadataInfo.author = content;
+                    element.type = 'author';
+                    debug(`Found author: "${content}"`);
+                }
+                // Look for source info
+                else if (!metadataInfo.source && content.toLowerCase().includes('based on')) {
+                    metadataInfo.source = content;
+                    element.type = 'source';
+                    debug(`Found source: "${content}"`);
+                }
+                // Look for copyright info
+                else if (!metadataInfo.copyright && (
+                    content.includes('©') || 
+                    content.includes('(c)') || 
+                    content.toLowerCase().includes('copyright'))) {
+                    metadataInfo.copyright = content;
+                    element.type = 'copyright';
+                    debug(`Found copyright: "${content}"`);
+                }
+                // Other elements might be notes
+                else if (!metadataInfo.notes) {
+                    metadataInfo.notes = content;
+                    element.type = 'notes';
+                    debug(`Found notes: "${content}"`);
+                }
+                
+                i++;
+            }
+            
+            debug(`Finished extracting metadata`);
+        }
+
+        function renderPreview(elements) {
+            debug("Rendering preview");
+            preview.innerHTML = '';
+
+            let lastPageNumber = -1;
+
+            elements.forEach(element => {
+                const p = document.createElement('p');
+                p.className = element.type;
+                p.setAttribute('data-page', element.pageNumber);
+                if (element.id !== undefined) {
+                    p.setAttribute('data-id', element.id);
+                }
+
+                // Handle multiline notes
+                if (element.type === 'notes' && element.content.includes('\n')) {
+                    p.innerHTML = element.content.replace(/\n/g, '<br>');
+                } else {
+                    p.textContent = element.content;
+                }
+
+                // Add page break if needed and if option is enabled
+                if (document.getElementById('include-page-numbers').checked &&
+                    element.pageNumber > lastPageNumber &&
+                    element.type !== 'page-break' &&
+                    element.type !== 'title' &&
+                    element.type !== 'credit' &&
+                    element.type !== 'author' &&
+                    element.type !== 'source' &&
+                    element.type !== 'notes' &&
+                    element.type !== 'copyright') {
+                    lastPageNumber = element.pageNumber;
+
+const existingPageBreak = screenplayElements.some(e => 
+    e.type === 'page-break' && e.pageNumber === lastPageNumber);
+
+if (!existingPageBreak && lastPageNumber > 0) {
+    const pageBreak = document.createElement('p');
+    pageBreak.className = 'page-break';
+    pageBreak.textContent = `— min(appr) ${lastPageNumber} —`;
+    pageBreak.setAttribute('data-page', lastPageNumber);
+    preview.appendChild(pageBreak);
+}
+                }
+
+                preview.appendChild(p);
+            });
+            
+            debug("Preview rendering complete");
+        }
+        
+        // Function to extract content from the editable preview
+        function extractFromEditablePreview() {
+            debug("Extracting content from editable preview");
+            
+            const elements = [];
+            const paragraphs = preview.querySelectorAll('p');
+            
+            paragraphs.forEach(p => {
+                const type = p.className;
+                const pageNumber = parseInt(p.getAttribute('data-page') || '1');
+                const content = p.textContent;
+                
+                if (content.trim()) { // Only add non-empty elements
+                    elements.push({
+                        type: type,
+                        content: content,
+                        pageNumber: pageNumber
+                    });
+                }
+            });
+            
+            debug(`Extracted ${elements.length} elements from preview`);
+            screenplayElements = elements;
+            return elements;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        function convertFile(file) {
+            debug(`Converting file: ${file.name}`);
+            showStatus('Conversion in progress...', 'success');
+            handleFileSelect(file);
+        }
+
+        function showStatus(message, type) {
+            debug(`Status: ${message} (${type})`);
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+            statusElement.style.display = 'block';
+
+            // Hide message after 5 seconds
+            setTimeout(function() {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+
+        function showProgress(show, percent = 0) {
+            if (show) {
+                progressContainer.style.display = 'block';
+                progressBar.style.width = `${percent}%`;
+                debug(`Progress: ${percent}%`);
+            } else {
+                progressContainer.style.display = 'none';
+                debug("Progress bar hidden");
+            }
+        }
+
+        async function generateEpub() {
+            debug("Generating EPUB file");
+            try {
+                showProgress(true, 10);
+                showStatus('Generating EPUB...', 'success');
+
+                debug("Creating JSZip instance");
+                // Create a new JSZip object
+                const zip = new JSZip();
+
+                // Add mimetype file (must be first without compression)
+                zip.file("mimetype", "application/epub+zip", {compression: "STORE"});
+                debug("Added mimetype file");
+
+                // Create META-INF structure
+                zip.folder("META-INF").file("container.xml", 
+                    `<?xml version="1.0" encoding="UTF-8"?>
+                    <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+                        <rootfiles>
+                            <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+                        </rootfiles>
+                    </container>`
+                );
+                debug("Added META-INF structure");
+
+                // Create OEBPS folder
+                const oebps = zip.folder("OEBPS");
+
+                // Create CSS file
+                debug("Adding CSS file");
+                oebps.file("style.css", 
+                    `.scene-heading {
+                        text-transform: uppercase;
+                        font-weight: bold;
+                        margin-top: 1.5em;
+                        text-align: left;
+                    }
+                    .action {
+                        text-align: left;
+                        margin-top: 1em;
+                    }
+                    .character {
+                        text-transform: uppercase;
+                        text-align: center;
+                        margin-left: 10em;
+                        margin-top: 1em;
+                        margin-bottom: 0;
+                        font-weight: bold;
+                        padding-bottom: 0;
+                        line-height: 1.5;
+                    }
+                    .parenthetical {
+                        margin-left: 9em;
+                        margin-top: 0;
+                        margin-bottom: 0;
+                        padding-top: 0;
+                        padding-bottom: 0;
+                        line-height: 1.5;
+                    }
+                    .dialogue {
+                        margin-left: 8em;
+                        margin-right: 8em;
+                        margin-top: 0;
+                        margin-bottom: 0;
+                        padding-top: 0;
+                        line-height: 1.5;
+                    }
+                    
+                    /* Add a container for the dialogue that groups character, parenthetical and dialogue */
+                    .dialogue-block {
+                        margin-bottom: 1em;
+                    }
+                    .dialogue-block p {
+                        margin: 0;
+                        padding: 0;
+                    }
+                    /* Ensure no spaces between consecutive paragraphs in a dialogue */
+                    .dialogue-block .character + .parenthetical,
+                    .dialogue-block .character + .dialogue,
+                    .dialogue-block .parenthetical + .dialogue {
+                        margin-top: 0;
+                    }
+                    
+                    /* Force tight vertical stacking without spaces */
+                    p {
+                        margin-top: 0;
+                        margin-bottom: 0;
+                    }
+                    p + p {
+                        margin-top: 0;
+                    }
+                    .transition {
+                        text-transform: uppercase;
+                        text-align: right;
+                        margin-top: 1em;
+                    }
+                    .page-break {
+                        border-top: 1px dashed #aaa;
+                        margin: 1.5em 0;
+                        padding-top: 0.5em;
+                        font-size: 0.8em;
+                        color: #888;
+                        text-align: right;
+                    }
+                    .title {
+                        text-align: center;
+                        font-size: 1.5em;
+                        font-weight: bold;
+                        margin-top: 3em;
+                        margin-bottom: 0.5em;
+                    }
+                    .credit {
+                        text-align: center;
+                        margin-bottom: 0.5em;
+                    }
+                    .author {
+                        text-align: center;
+                        margin-bottom: 1em;
+                    }
+                    .source {
+                        text-align: center;
+                        margin-top: 1em;
+                        margin-bottom: 1em;
+                        font-style: italic;
+                    }
+                    .notes {
+                        text-align: right;
+                        margin-top: 3em;
+                        font-style: italic;
+                        font-size: 0.9em;
+                    }
+                    .copyright {
+                        text-align: center;
+                        margin-top: 2em;
+                        font-size: 0.9em;
+                    }
+                    .centered {
+                        text-align: center;
+                        margin: 1em auto;
+                        font-style: italic;
+                    }`
+                );
+
+                // Create content.opf
+                debug("Adding content.opf");
+                oebps.file("content.opf", 
+                    `<?xml version="1.0" encoding="UTF-8"?>
+                    <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
+                        <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+                            <dc:title>${metadataInfo.title || "Screenplay"}</dc:title>
+                            <dc:creator>${metadataInfo.author || "Unknown Author"}</dc:creator>
+                            <dc:identifier id="uid">screenplay-${Date.now()}</dc:identifier>
+                            <dc:language>it</dc:language>
+                            <meta property="dcterms:modified">${new Date().toISOString().split('.')[0]}Z</meta>
+                        </metadata>
+                        <manifest>
+                            <item id="screenplay" href="screenplay.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+                            <item id="css" href="style.css" media-type="text/css"/>
+                        </manifest>
+                        <spine>
+                            <itemref idref="screenplay"/>
+                        </spine>
+                    </package>`
+                );
+
+                showProgress(true, 50);
+                debug("Creating HTML content");
+
+                // Create HTML content
+                let screenplayHtml = `<?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE html>
+                    <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+                    <head>
+                        <title>${metadataInfo.title || "Screenplay"}</title>
+                        <meta charset="utf-8"/>
+                        <link rel="stylesheet" type="text/css" href="style.css"/>
+                    </head>
+                    <body>`;
+
+                // Add screenplay elements
+                debug(`Adding ${screenplayElements.length} screenplay elements to HTML`);
+                screenplayElements.forEach(function(element) {
+                    if (element.type === 'notes' && element.content.includes('\n')) {
+                        // Special handling for multiline notes
+                        screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content).replace(/\n/g, '<br/>')}</p>\n`;
+                    } else {
+                        screenplayHtml += `<p class="${element.type}">${escapeHtml(element.content)}</p>\n`;
+                    }
+                });
+
+                screenplayHtml += `</body></html>`;
+
+                oebps.file("screenplay.xhtml", screenplayHtml);
+                debug("Added screenplay.xhtml");
+
+                showProgress(true, 80);
+                debug("Generating final EPUB file");
+
+                // Generate EPUB file
+                try {
+                    const content = await zip.generateAsync({
+                        type: "blob",
+                        mimeType: "application/epub+zip",
+                        compression: "DEFLATE",
+                        compressionOptions: {
+                            level: 9
+                        }
+                    }, function(metadata) {
+                        const percentComplete = 80 + Math.floor(metadata.percent * 0.2);
+                        showProgress(true, percentComplete);
+                    });
+                    
+                    debug("EPUB file generated successfully");
+
+                    // Create filename based on title
+                    const filename = `${(metadataInfo.title || "screenplay").replace(/[^a-z0-9]/gi, '_').toLowerCase()}.epub`;
+                    debug(`Saving as: ${filename}`);
+
+                    // Download the file
+                    saveAs(content, filename);
+
+                    showStatus('EPUB generated successfully!', 'success');
+                    showProgress(true, 100);
+                    setTimeout(function() { showProgress(false); }, 500);
+                } catch (zipError) {
+                    debug(`Error generating zip: ${zipError.message}`);
+                    throw zipError;
+                }
+
+            } catch (error) {
+                debug(`Error in generateEpub: ${error.message}`);
+                console.error('Error generating EPUB:', error);
+                showStatus('Error generating EPUB: ' + error.message, 'error');
+                showProgress(false);
+            }
+        }
+
+        // Initialize with an example
+        const exampleContent = [
+            { type: 'title', content: 'LA PRIMINA', pageNumber: 1 },
+            { type: 'credit', content: 'written by', pageNumber: 1 },
+            { type: 'author', content: 'Antonio De Rosa', pageNumber: 1 },
+            { type: 'source', content: 'based on the short novel by Antonio De Rosa', pageNumber: 1 },
+            { type: 'copyright', content: '(c) 2025 ADR', pageNumber: 1 },
+            { type: 'action', content: 'This is a story from Southern Italy, full of attempts to domesticate the rules, and characters that seem invented. But it is true.', pageNumber: 1 },
+            { type: 'page-break', content: '— min(appr) 1 —', pageNumber: 1 },
+            { type: 'scene-heading', content: 'INT. CASA DI MARIO - GIORNO', pageNumber: 1 },
+            { type: 'action', content: 'Mario entra nell\'appartamento e si guarda intorno. Posa la giacca su una sedia.', pageNumber: 1 },
+            { type: 'character', content: 'MARIO (V.O.)', pageNumber: 1 },
+            { type: 'parenthetical', content: '(guardando intorno)', pageNumber: 1 },
+            { type: 'dialogue', content: 'Sono a casa! C\'è qualcuno?', pageNumber: 1 },
+            { type: 'transition', content: 'FADE TO:', pageNumber: 1 }
+        ];
+
+        screenplayElements = exampleContent;
+        renderPreview(exampleContent);
+        
+        // Add tooltip/guide for editable preview
+        const previewSection = document.querySelector('.preview-section h2');
+        const guideText = document.createElement('p');
+        guideText.style.fontSize = '0.8em';
+        guideText.style.color = '#666';
+        guideText.style.fontStyle = 'italic';
+        guideText.textContent = 'Tip: You can edit the text directly before downloading the EPUB.';
+        previewSection.appendChild(guideText);
+        
+        debug("Initialized with example content");
+    } catch (e) {
+        debug(`ERROR in main script: ${e.message}`);
+        console.error("Initialization error:", e);
+    }
+});
+</script>
+</body>
+</html>
