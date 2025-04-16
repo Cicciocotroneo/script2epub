@@ -779,16 +779,17 @@ if (centeredPos < 150 && text.toUpperCase() === text) {
             // Check for character (centered, all caps, sometimes with extensions)
 // This is more tolerant of centering to handle odd/even page formatting
 if (centeredPos < 150 && text.toUpperCase() === text) {
-    // Pattern migliorato: nome in maiuscolo seguito da spazi/apostrofo, poi parentesi multiple
-    const characterPattern = /^([A-Z][A-Z\s']+)(\s*\([^)]+\)\s*)+$/;
-    const baseCharacterPattern = /^[A-Z][A-Z\s']+$/;
-
-    // Caso 1: Nome pulito senza parentesi (es. "JOHN")
-    if (baseCharacterPattern.test(text.trim())) {
+    // Pattern migliorato per il nome del personaggio (accetta apostrofi e spazi)
+    const characterNamePattern = /^[A-Z][A-Z\s']*/;
+    
+    // Se il testo è SOLO il nome del personaggio (senza parentesi)
+    if (characterNamePattern.test(text.trim()) && !/[()]/.test(text)) {
         return 'character';
     }
-    // Caso 2: Nome con parentesi singole o multiple (es. "JOHN (V.O.)(CONT'D)")
-    else if (characterPattern.test(text.trim())) {
+    
+    // Se il testo contiene parentesi (singole o multiple)
+    const hasValidParentheses = /^[A-Z][A-Z\s']*(\s*\([^)]+\)\s*)+$/.test(text.trim());
+    if (hasValidParentheses) {
         return 'character';
     }
 }
@@ -1264,5 +1265,6 @@ if (!existingPageBreak && lastPageNumber > 0) {
     }
 });
 </script>
+    <center>---</center>
 </body>
 </html>
