@@ -789,7 +789,7 @@ if (centeredPos < 150 && text.toUpperCase() === text) {
         // 2. Ha estensioni tra parentesi come (V.O.), (O.S.), ecc., in qualsiasi formato
         
         // Controlla se ci sono parentesi di qualsiasi tipo
-        const hasParentheses = /\([^)]*\)/.test(text);
+        const hasParentheses = /(\([^)]*\))+/.test(text);
         
         // Se non ci sono parentesi, è comunque un personaggio
         if (!hasParentheses) {
