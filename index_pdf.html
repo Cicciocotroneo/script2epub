@@ -778,22 +778,31 @@ if (centeredPos < 150 && text.toUpperCase() === text) {
 
             // Check for character (centered, all caps, sometimes with extensions)
 // This is more tolerant of centering to handle odd/even page formatting
+// Check for character (centered, all caps, with or without extensions)
 if (centeredPos < 150 && text.toUpperCase() === text) {
-    // Pattern migliorato per il nome del personaggio (accetta apostrofi e spazi)
-    const characterNamePattern = /^[A-Z][A-Z\s']*/;
+    // Split the text into name part and extensions
+    const parts = text.split(/(\([^)]*\))/);
+    const namePart = parts[0].trim();
     
-    // Se il testo è SOLO il nome del personaggio (senza parentesi)
-    if (characterNamePattern.test(text.trim()) && !/[()]/.test(text)) {
-        return 'character';
+    // Check if the name part is valid (starts with capital letter, contains only letters, spaces, apostrophes)
+    const isValidName = /^[A-Z][A-Z\s']*$/.test(namePart);
+    
+    // Check if the rest are valid extensions (parentheses with any content)
+    let hasValidExtensions = true;
+    for (let i = 1; i < parts.length; i++) {
+        if (!parts[i].startsWith('(') || !parts[i].endsWith(')')) {
+            hasValidExtensions = false;
+            break;
+        }
     }
     
-    // Se il testo contiene parentesi (singole o multiple)
-    const hasValidParentheses = /^[A-Z][A-Z\s']*(\s*\([^)]+\)\s*)+$/.test(text.trim());
-    if (hasValidParentheses) {
+    // It's a character if:
+    // 1. The name part is valid
+    // 2. Either there are no extensions, or all extensions are valid
+    if (isValidName && (parts.length === 1 || hasValidExtensions)) {
         return 'character';
     }
-}
-            
+}           
             // Check for parenthetical (starts and ends with parentheses)
             // More flexible on position to handle odd/even pages
             if (text.match(/^\(.+\)$/) && centeredPos < 200) {
