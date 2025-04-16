@@ -777,32 +777,31 @@ if (centeredPos < 150 && text.toUpperCase() === text) {
 } */
 
             // Check for character (centered, all caps, sometimes with extensions)
-// This is more tolerant of centering to handle odd/even page formatting
-// Check for character (centered, all caps, with or without extensions)
-if (centeredPos < 150 && text.toUpperCase() === text) {
-    // Split the text into name part and extensions
-    const parts = text.split(/(\([^)]*\))/);
+// Check for character (centered, all caps name with optional mixed-case extensions)
+if (centeredPos < 150) {
+    // Split into potential name and extensions
+    const parts = text.split(/(\(.*?\))/g).filter(part => part.trim() !== '');
     const namePart = parts[0].trim();
     
-    // Check if the name part is valid (starts with capital letter, contains only letters, spaces, apostrophes)
-    const isValidName = /^[A-Z][A-Z\s']*$/.test(namePart);
+    // Check if name part is all uppercase and valid
+    const isNameValid = (namePart.toUpperCase() === namePart) && 
+                       /^[A-Z][A-Z\s'\-]*$/.test(namePart);
     
-    // Check if the rest are valid extensions (parentheses with any content)
-    let hasValidExtensions = true;
+    // Check extensions (can be mixed case but must be in parentheses)
+    let areExtensionsValid = true;
     for (let i = 1; i < parts.length; i++) {
-        if (!parts[i].startsWith('(') || !parts[i].endsWith(')')) {
-            hasValidExtensions = false;
+        const part = parts[i].trim();
+        if (!(part.startsWith('(') && part.endsWith(')'))) {
+            areExtensionsValid = false;
             break;
         }
     }
     
-    // It's a character if:
-    // 1. The name part is valid
-    // 2. Either there are no extensions, or all extensions are valid
-    if (isValidName && (parts.length === 1 || hasValidExtensions)) {
+    // Valid if: name is valid AND (no extensions or all extensions valid)
+    if (isNameValid && (parts.length === 1 || areExtensionsValid)) {
         return 'character';
     }
-}           
+}
             // Check for parenthetical (starts and ends with parentheses)
             // More flexible on position to handle odd/even pages
             if (text.match(/^\(.+\)$/) && centeredPos < 200) {
