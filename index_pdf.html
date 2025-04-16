@@ -731,8 +731,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const sceneNumberPattern = /^(\d+[A-Z]?\.?|[A-Z]\d+\.?|[A-Z]\.\d+\.?)/;
             
             // Check for scene heading - now handles scene numbers before the INT/EXT
-            if ((text.match(/^(INT\.?|EXT\.?|I\/E\.?|EST\.?|INT\/EST\.?|INTERNO\.?|ESTERNO\.?)/i) || 
-                 text.match(new RegExp(`${sceneNumberPattern.source}\\s+(INT|EXT|I\\/E|EST|INT\\/EST|INTERNO|ESTERNO)`, 'i'))) && 
+            if ((text.match(/^(INT\.?|EXT\.?|I\/E\.?|EST\.?|FADE IN|INT\/EST\.?|INT\/EXT\.?|INTERNO\.?|ESTERNO\.?)/i) || 
+                 text.match(new RegExp(`${sceneNumberPattern.source}\\s+(INT|EXT|I\\/E|EST|INT\\/EST|INT\\/EXT|INTERNO|ESTERNO)`, 'i'))) && 
                 text.toUpperCase() === text) {
                 return 'scene-heading';
             }
@@ -743,13 +743,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 return 'transition';
             }
             
-            // Check for character (centered, all caps, sometimes with extensions)
+            /* // Check for character (centered, all caps, sometimes with extensions)
             // This is more tolerant of centering to handle odd/even page formatting
             if (centeredPos < 150 && text.toUpperCase() === text && 
                 (text.match(/^[A-Z][A-Z\s']+(\s*\([A-Za-z\s\.,']+\))*$/) ||
                  text.match(/^[A-Z][A-Z\s']+((\s*\([A-Za-z\s\.,']+\))+|(\s*(CONT('D)?|CONTINUED|V\.O\.|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?))*)$/i))) {
                 return 'character';
-            }
+            } */
+
+// Check for character (centered, all caps, sometimes with extensions)
+// This is more tolerant of centering to handle odd/even page formatting
+if (centeredPos < 150 && text.toUpperCase() === text) {
+    // Base character name pattern
+    const baseCharacterPattern = /^[A-Z][A-Z\s']+/;
+    
+    // Check if it's a basic character name
+    if (baseCharacterPattern.test(text)) {
+        // It's a character if:
+        // 1. It's just the character name
+        // 2. It has parenthetical extensions like (V.O.), (O.S.), etc.
+        // 3. It has multiple extensions like (V.O.)(CONT'D)
+        
+        // Check for any combination of extensions
+        const hasExtensions = text.includes('(') && text.includes(')');
+        
+        // Common character extensions
+        const extensionPattern = /(CONT'D|CONTINUED|V\.O\.|O\.S\.|VOICE OVER|OFF SCREEN|OFF-SCREEN|FILTER(ED)?)/i;
+        
+        if (!hasExtensions || extensionPattern.test(text)) {
+            return 'character';
+        }
+    }
+}
             
             // Check for parenthetical (starts and ends with parentheses)
             // More flexible on position to handle odd/even pages
